@@ -92,7 +92,7 @@ if not st.session_state["logado_despesas"]:
             user_input = st.selectbox("Usuário de acesso:", lista_usuarios)
             
             # Autocomplete="new-password" bloqueia a sugestão automática do navegador
-            pass_input = st.text_input("Senha de acesso:", type="password", placeholder="••••••••", autocomplete="new-password")
+            pass_input = st.text_input("Senha de acesso:", type="password", placeholder="••••••••", autocomplete="current-password")
             
             st.markdown("<br>", unsafe_allow_html=True)
             if st.button("Entrar no Sistema", use_container_width=True, type="primary"):
