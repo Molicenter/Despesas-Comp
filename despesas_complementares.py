@@ -449,7 +449,7 @@ elif perfil in ["admin", "supervisor"]:
                             time.sleep(1.5)
                             st.rerun()
 
-        # =========================================================
+       # =========================================================
         # TABELA CONSOLIDADA E HISTÓRICO
         # =========================================================
         st.markdown("<br><hr>", unsafe_allow_html=True)
@@ -462,10 +462,16 @@ elif perfil in ["admin", "supervisor"]:
                 by=['Loja', 'Carimbo de Data/Hora'], ascending=[True, False]
             ).reset_index(drop=True)
 
+            # df_view mantém todos os dados (usaremos ele para o Excel)
             df_view = df_historico.copy()
             df_view['Valor'] = df_view['Valor'].apply(
                 lambda x: f"R$ {float(x):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
             )
+
+            # df_tela será usado apenas na visualização (removemos o carimbo para ganhar espaço)
+            df_tela = df_view.copy()
+            if 'Carimbo de Data/Hora' in df_tela.columns:
+                df_tela = df_tela.drop(columns=['Carimbo de Data/Hora'])
 
             def highlight_status(val):
                 if val == 'Aprovado':
@@ -474,8 +480,9 @@ elif perfil in ["admin", "supervisor"]:
                     return 'color: #ef4444; font-weight: bold;'
                 return ''
 
+            # Exibe o df_tela (sem o carimbo)
             st.dataframe(
-                df_view.style.map(highlight_status, subset=['Autorização Supervisor']),
+                df_tela.style.map(highlight_status, subset=['Autorização Supervisor']),
                 use_container_width=True,
                 hide_index=True
             )
