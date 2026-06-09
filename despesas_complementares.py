@@ -328,33 +328,7 @@ elif perfil in ["admin", "supervisor"]:
         card_metrica(col3, "Reprovados", len(df_reprovados), df_reprovados['Valor'].sum(), "#ef4444")
         card_metrica(col4, "Total Geral", len(df_exibicao), df_exibicao['Valor'].sum(), "#38bdf8")
 
-        # --- RESUMO POR LOJA (APROVADOS) ---
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("### 🏪 Resumo de Aprovados por Loja")
-        
-        if not df_aprovados.empty:
-            resumo_lojas = df_aprovados.groupby('Loja').agg(
-                Qtde=('Valor', 'count'),
-                Total_RS=('Valor', 'sum')
-            ).reset_index()
-            
-            resumo_lojas['Total_RS'] = resumo_lojas['Total_RS'].apply(lambda x: f"R$ {x:,.2f}")
-            resumo_lojas.rename(columns={'Loja': 'Loja', 'Qtde': 'Qtde', 'Total_RS': 'R$'}, inplace=True)
-            
-            st.dataframe(
-                resumo_lojas, 
-                use_container_width=False, 
-                hide_index=True,
-                column_config={
-                    "Loja": st.column_config.NumberColumn("Loja", width="small"),
-                    "Qtde": st.column_config.NumberColumn("Qtde", width="small"),
-                    "R$": st.column_config.TextColumn("R$", width="medium")
-                }
-            )
-        else:
-            st.info("Nenhuma despesa aprovada até o momento.")
-
-        # --- AVALIAÇÃO EM LOTE ---
+               # --- AVALIAÇÃO EM LOTE ---
         st.markdown("<br><hr>", unsafe_allow_html=True)
         st.markdown("### ⏳ Avaliação em Lote (Lançamentos Pendentes)")
                
@@ -456,31 +430,56 @@ elif perfil in ["admin", "supervisor"]:
                 hide_index=True
             )
 
-        # =========================================================
-        # BLOCO DE ASSINATURAS NO RODAPÉ
+     # =========================================================
+        # BLOCO DE ASSINATURAS NO RODAPÉ E RESUMO POR LOJA
         # =========================================================
         st.markdown("<br><br>", unsafe_allow_html=True)
         
-        # Ajustamos a proporção para 0.7 nas pontas. Isso diminui a largura das imagens.
         col_sig1, col_space, col_sig2 = st.columns([0.7, 2.5, 0.7])
         
+        # --- ASSINATURA ESQUERDA (LUCIANA) ---
         with col_sig1:
             if os.path.exists("Luciana.png"):
                 st.image("Luciana.png", use_container_width=True)
             else:
                 st.markdown("<br><br>", unsafe_allow_html=True)
-            # Obs: Textos e linhas extras removidos pois a imagem já os contém
 
+        # --- MEIO: RESUMO POR LOJA ---
+        with col_space:
+            st.markdown("<h4 style='text-align: center; margin-top: 0;'>🏪 Resumo de Aprovados por Loja</h4>", unsafe_allow_html=True)
+            
+            if not df_aprovados.empty:
+                resumo_lojas = df_aprovados.groupby('Loja').agg(
+                    Qtde=('Valor', 'count'),
+                    Total_RS=('Valor', 'sum')
+                ).reset_index()
+                
+                resumo_lojas['Total_RS'] = resumo_lojas['Total_RS'].apply(lambda x: f"R$ {x:,.2f}")
+                resumo_lojas.rename(columns={'Loja': 'Loja', 'Qtde': 'Qtde', 'Total_RS': 'R$'}, inplace=True)
+                
+                # use_container_width=True para a tabela preencher o meio de forma elegante
+                st.dataframe(
+                    resumo_lojas, 
+                    use_container_width=True, 
+                    hide_index=True,
+                    column_config={
+                        "Loja": st.column_config.NumberColumn("Loja", width="small"),
+                        "Qtde": st.column_config.NumberColumn("Qtde", width="small"),
+                        "R$": st.column_config.TextColumn("R$", width="medium")
+                    }
+                )
+            else:
+                st.info("Nenhuma despesa aprovada até o momento.")
+
+        # --- ASSINATURA DIREITA (ADRIANO) ---
         with col_sig2:
             if os.path.exists("Adriano.png"):
                 st.image("Adriano.png", use_container_width=True)
             else:
                 st.markdown("<br><br>", unsafe_allow_html=True)
-            # Obs: Textos e linhas extras removidos pois a imagem já os contém
 
-        # Linha separadora antes dos botões
+        # Linha separadora antes dos botões de Exportar e Limpar
         st.markdown("<br><hr>", unsafe_allow_html=True)
-
         # =========================================================
         # BOTÕES DE EXPORTAR E LIMPAR (NO FINAL DA PÁGINA)
         # =========================================================
