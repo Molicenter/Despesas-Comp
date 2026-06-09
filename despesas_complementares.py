@@ -170,7 +170,6 @@ if perfil == "loja":
             depto = st.selectbox("Departamento *", OPCOES_DEPTO)
         with col2:
             data_trab = st.date_input("Data Trabalhada *", format="DD/MM/YYYY")
-            # --- CORREÇÃO AQUI: value=None inserido para o campo iniciar vazio ---
             valor = st.number_input("Valor (R$) *", min_value=0.0, step=10.0, format="%.2f", value=None)
             obs = st.text_area("Observações", placeholder="Justificativa ou transferência...")
             
@@ -180,12 +179,12 @@ if perfil == "loja":
         if submit:
             if not nome.strip():
                 st.error("⚠️ O campo Nome é obrigatório.")
-            # --- CORREÇÃO AQUI: Trava de validação para quando o valor estiver vazio ou zero ---
             elif valor is None or valor <= 0:
                 st.error("⚠️ O campo Valor deve ser preenchido com um valor maior que zero.")
             else:
                 with st.spinner("⏳ Enviando dados para o Google Sheets..."):
                     payload = {
+                        "action": "insert",
                         "Loja": loja_fixa,
                         "Nome": nome.upper().strip(),
                         "Motivo": motivo,
@@ -198,13 +197,11 @@ if perfil == "loja":
                     
                     sucesso = False
                     try:
-                        # Faz a requisição de postagem de dados
                         requests.post(URL_API_DESPESAS, json=payload, timeout=10)
                         sucesso = True
                     except Exception as e:
                         st.error(f"Erro de conexão ao salvar os dados: {e}")
                     
-                # Roda a limpeza e recarregamento FORA do try/except
                 if sucesso:
                     st.success("✅ Despesa registrada com sucesso!")
                     st.cache_data.clear()
@@ -212,24 +209,72 @@ if perfil == "loja":
                     st.rerun()
 
     st.markdown("---")
-    st.markdown("### 📋 Seus Registros Recentes")
+    
+    # DIVISÃO DA TELA: TABELA À ESQUERDA E BOTÃO DE EXCLUIR À DIREITA
+    col_tabela, col_delete = st.columns([0.7, 0.3])
+    
+    with col_tabela:
+        st.markdown("### 📋 Seus Registros Recentes")
+    
     if not df_base.empty:
         try:
             # Filtra apenas a loja atual
             df_loja = df_base[df_base['Loja'].astype(str) == str(loja_fixa)].copy()
             
             if not df_loja.empty:
-                # Opcional: inverte a tabela para os últimos aparecerem primeiro
+                # Inverte a tabela para os últimos aparecerem primeiro
                 df_loja = df_loja.iloc[::-1].reset_index(drop=True)
                 
-                # Exibe a tabela bonitinha
-                st.dataframe(df_loja, use_container_width=True, hide_index=True)
+                with col_tabela:
+                    st.dataframe(df_loja, use_container_width=True, hide_index=True)
+                
+                with col_delete:
+                    with st.container(border=True):
+                        st.markdown("#### 🗑️ Cancelar Lançamento")
+                        st.markdown("<span style='font-size:13px; color:#cbd5e1;'>Lançou errado? Selecione abaixo e exclua.</span>", unsafe_allow_html=True)
+                        
+                        opcoes_delete = []
+                        # Cria uma lista de opções baseada nos registros da loja
+                        for idx, row in df_loja.iterrows():
+                            data_str = str(row.get("Data Trabalhada", ""))
+                            nome_str = str(row.get("Nome Completo", ""))
+                            valor_str = str(row.get("Valor", 0))
+                            opcoes_delete.append(f"{data_str} | {nome_str} | R$ {valor_str}")
+                        
+                        registro_selecionado = st.selectbox("Selecione o registro:", ["- Selecione -"] + opcoes_delete, label_visibility="collapsed")
+                        
+                        if st.button("Confirmar Exclusão", type="primary", use_container_width=True):
+                            if registro_selecionado != "- Selecione -":
+                                # Extrai os dados exatos que a loja selecionou
+                                partes = registro_selecionado.split(" | ")
+                                nome_del = partes[1].strip()
+                                valor_del = partes[2].replace("R$", "").strip()
+                                
+                                with st.spinner("Apagando..."):
+                                    payload_del = {
+                                        "action": "delete",
+                                        "Loja": loja_fixa,
+                                        "Nome": nome_del,
+                                        "Valor": float(valor_del)
+                                    }
+                                    try:
+                                        requests.post(URL_API_DESPESAS, json=payload_del, timeout=10)
+                                        st.success("Registro excluído!")
+                                        st.cache_data.clear()
+                                        time.sleep(1)
+                                        st.rerun()
+                                    except:
+                                        st.error("Erro ao tentar excluir.")
+                            else:
+                                st.warning("Por favor, selecione um registro na lista.")
             else:
-                st.info("Nenhum registro encontrado para a sua loja até o momento.")
+                with col_tabela:
+                    st.info("Nenhum registro encontrado para a sua loja até o momento.")
         except:
             st.dataframe(df_base, use_container_width=True, hide_index=True)
     else:
         st.info("O banco de dados ainda está vazio.")
+
 
 # --- VISÃO GERENCIAL / SUPERVISOR ---
 elif perfil in ["admin", "supervisor"]:
