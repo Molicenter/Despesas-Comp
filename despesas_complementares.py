@@ -24,7 +24,7 @@ st.markdown("""
 URL_API_DESPESAS = "https://script.google.com/macros/s/AKfycbwbOdR--mh46XzwbUId8P4OsxQ8-T8ItbE4JwErh10qwMLWWt1S1vYUIFkK1mnzkxArYw/exec" 
 
 USUARIOS_DB = {
-    "admin@molicenter.com.br": {"senha": "moli0000", "perfil": "admin", "loja_fixa": None},
+    "administrador@molicenter.com.br": {"senha": "moli0000", "perfil": "admin", "loja_fixa": None},
     "supervisor@molicenter.com.br": {"senha": "moli0000", "perfil": "supervisor", "loja_fixa": None},
     "loja01@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 1},
     "loja02@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 2},
