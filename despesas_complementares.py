@@ -444,7 +444,7 @@ elif perfil in ["admin", "supervisor"]:
             else:
                 st.markdown("<br><br>", unsafe_allow_html=True)
 
-        # --- MEIO: RESUMO POR LOJA ---
+       # --- MEIO: RESUMO POR LOJA ---
         with col_space:
             st.markdown("<h4 style='text-align: center; margin-top: 0;'>🏪 Resumo de Aprovados por Loja</h4>", unsafe_allow_html=True)
             
@@ -457,17 +457,20 @@ elif perfil in ["admin", "supervisor"]:
                 resumo_lojas['Total_RS'] = resumo_lojas['Total_RS'].apply(lambda x: f"R$ {x:,.2f}")
                 resumo_lojas.rename(columns={'Loja': 'Loja', 'Qtde': 'Qtde', 'Total_RS': 'R$'}, inplace=True)
                 
-                # use_container_width=True para a tabela preencher o meio de forma elegante
-                st.dataframe(
-                    resumo_lojas, 
-                    use_container_width=True, 
-                    hide_index=True,
-                    column_config={
-                        "Loja": st.column_config.NumberColumn("Loja", width="small"),
-                        "Qtde": st.column_config.NumberColumn("Qtde", width="small"),
-                        "R$": st.column_config.TextColumn("R$", width="medium")
-                    }
-                )
+                # Criamos 3 sub-colunas para "espremer" a tabela no centro
+                _, col_tabela_centro, _ = st.columns([1, 2, 1])
+                
+                with col_tabela_centro:
+                    st.dataframe(
+                        resumo_lojas, 
+                        use_container_width=True, 
+                        hide_index=True,
+                        column_config={
+                            "Loja": st.column_config.NumberColumn("Loja", width="small"),
+                            "Qtde": st.column_config.NumberColumn("Qtde", width="small"),
+                            "R$": st.column_config.TextColumn("R$", width="small")
+                        }
+                    )
             else:
                 st.info("Nenhuma despesa aprovada até o momento.")
 
