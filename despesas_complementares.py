@@ -380,6 +380,26 @@ elif perfil in ["admin", "supervisor"]:
                             time.sleep(1.5)
                             st.rerun()
 
+        # --- NOVO BLOCO: RESUMO POR LOJA (APROVADOS) ---
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("### 🏪 Resumo de Aprovados por Loja")
+        
+        if not df_aprovados.empty:
+            # Agrupa os aprovados por Loja
+            resumo_lojas = df_aprovados.groupby('Loja').agg(
+                Qtde=('Valor', 'count'),
+                Total_RS=('Valor', 'sum')
+            ).reset_index()
+            
+            # Formata para ficar igual a sua imagem
+            resumo_lojas['Total_RS'] = resumo_lojas['Total_RS'].apply(lambda x: f"R$ {x:,.2f}")
+            resumo_lojas.rename(columns={'Loja': 'Loja', 'Qtde': 'Qtde', 'Total_RS': 'R$'}, inplace=True)
+            
+            # Exibe a tabela
+            st.dataframe(resumo_lojas, use_container_width=True, hide_index=True)
+        else:
+            st.info("Nenhuma despesa aprovada até o momento.")
+
         # =========================================================
         # TABELA CONSOLIDADA (substitui o expander de histórico)
         # =========================================================
