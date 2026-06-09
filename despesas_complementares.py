@@ -21,17 +21,14 @@ st.markdown("""
     <style>
     [data-testid="collapsedControl"] {display: none;}
     
-    /* 1. Libera a tabela do Streamlit para crescer infinitamente sem barra de rolagem */
-    [data-testid="stTable"], [data-testid="stTable"] > div {
+    /* Ajuste para tabela HTML nativa ocupar 100% da largura na tela normal */
+    [data-testid="stTable"] table {
         width: 100% !important;
-        height: auto !important;
-        max-height: none !important;
-        overflow: visible !important;
     }
 
     /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA --- */
     @media print {
-        /* Define PAISAGEM e margens */
+        /* 1. Força o modo PAISAGEM e define margens limpas */
         @page {
             size: landscape;
             margin: 1cm;
@@ -39,49 +36,58 @@ st.markdown("""
         
         body { zoom: 0.85; }
 
-        /* Esconde menus e botões */
+        /* 2. Esconde menus, botões e barras de ferramentas */
         header, footer, [data-testid="stToolbar"], [data-testid="stManageApp"], button, iframe { 
             display: none !important; 
         }
         
-        /* Fundo totalmente branco e sem cortes */
+        /* 3. Fundo branco absoluto e libera as alturas */
         html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], main, .stApp {
             background-color: #FFFFFF !important;
             background: #FFFFFF !important;
             height: auto !important;
+            min-height: auto !important;
             overflow: visible !important;
-            display: block !important;
-        }
-
-        /* CORREÇÃO DA SOBREPOSIÇÃO: Obriga todos os blocos a respeitarem o tamanho real da tabela */
-        [data-testid="stVerticalBlock"], [data-testid="stHorizontalBlock"] {
-            height: auto !important;
-            overflow: visible !important;
-            display: block !important;
         }
         
-        /* Ajuste para as colunas de assinatura ficarem lado a lado mesmo após forçar os blocos */
-        [data-testid="stHorizontalBlock"] {
-            display: flex !important;
-            page-break-inside: avoid !important;
-        }
-
-        /* Cores em preto puro para contraste */
+        /* 4. Cores de texto pretas */
         p, h1, h2, h3, h4, h5, h6, span, label, th, td { color: #000000 !important; }
         
-        /* Cards brancos */
+        /* 5. Estiliza os cards para impressão */
         .print-card {
             background-color: #FFFFFF !important; 
             border: 1.5px solid #000000 !important;
             box-shadow: none !important;
+            page-break-inside: avoid !important;
         }
         .print-card p, .print-card h2 { color: #000000 !important; }
 
-        /* MÁGICA DA QUEBRA DE PÁGINA NAS TABELAS */
+        /* 6. CORREÇÃO DO BURACO GIGANTE: Destrava as caixas invisíveis do Streamlit */
+        .element-container, .stMarkdown, [data-testid="stVerticalBlock"], [data-testid="stHorizontalBlock"] {
+            page-break-inside: auto !important;
+            page-break-before: auto !important;
+            page-break-after: auto !important;
+            height: auto !important;
+            overflow: visible !important;
+        }
+
+        /* 7. Gruda o título na tabela */
+        h3 {
+            page-break-after: avoid !important;
+            margin-bottom: 0px !important;
+            padding-bottom: 0px !important;
+        }
+
+        /* 8. MÁGICA DA QUEBRA DE PÁGINA (Linha por linha) */
+        [data-testid="stTable"] {
+            page-break-before: auto !important;
+            page-break-inside: auto !important;
+        }
         table { 
             page-break-inside: auto !important; 
             border-collapse: collapse !important; 
             width: 100% !important; 
+            margin-top: 0px !important;
         }
         tr { 
             page-break-inside: avoid !important; 
@@ -89,7 +95,7 @@ st.markdown("""
         }
         th, td { 
             border-bottom: 1px solid #ddd !important; 
-            padding: 8px !important; 
+            padding: 6px !important; 
         }
         thead { display: table-header-group !important; }
         tfoot { display: table-footer-group !important; }
@@ -480,7 +486,7 @@ elif perfil in ["admin", "supervisor"]:
         # TABELA CONSOLIDADA E HISTÓRICO
         # =========================================================
         st.markdown("<br><hr>", unsafe_allow_html=True)
-        st.markdown("### 📚 Despesas Complementares dessa semana")
+        st.markdown("<h3 style='margin-bottom: 0px;'>📚 Despesas Complementares dessa semana</h3>", unsafe_allow_html=True)
 
         if df_historico.empty:
             st.info("Nenhuma despesa foi avaliada ainda.")
@@ -498,11 +504,14 @@ elif perfil in ["admin", "supervisor"]:
             # df_tela será usado apenas na visualização
             df_tela = df_view.copy()
             
+            # Removemos a coluna do carimbo para dar mais espaço no papel
             if 'Carimbo de Data/Hora' in df_tela.columns:
                 df_tela = df_tela.drop(columns=['Carimbo de Data/Hora'])
 
+            # Encurtamos o nome da última coluna para otimizar espaço
             df_tela.rename(columns={'Autorização Supervisor': 'Status'}, inplace=True)
 
+            # Função de colorir aprovados/reprovados
             def highlight_status(val):
                 if val == 'Aprovado':
                     return 'color: #10b981; font-weight: bold;'
