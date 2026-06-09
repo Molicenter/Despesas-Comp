@@ -73,26 +73,41 @@ if "logado_despesas" not in st.session_state:
     st.session_state["loja_fixa"] = None
 
 # =========================================================
-# 2. TELA DE LOGIN
+# 2. TELA DE LOGIN (PADRONIZADA)
 # =========================================================
 if not st.session_state["logado_despesas"]:
+    # Estilização CSS para o botão ficar verde como no outro portal
+    st.markdown("""
+        <style>
+        div.stButton > button {
+            background-color: #2e7d32 !important; 
+            color: white !important; 
+            font-weight: bold;
+        }
+        div.stButton > button:hover {
+            background-color: #1b5e20 !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
     st.markdown("<br><br>", unsafe_allow_html=True)
-    _, col_centro, _ = st.columns([1, 1.2, 1])
+    _, col_centro, _ = st.columns([1, 1.5, 1])
     
     with col_centro:
         with st.container(border=True):
-            st.markdown("<h2 style='text-align: center; color: #0ea5e9; margin-bottom: 0;'>Molicenter</h2>", unsafe_allow_html=True)
-            st.markdown("<h4 style='text-align: center; color: #64748b; margin-top: 5px;'>Portal de Despesas Complementares</h4>", unsafe_allow_html=True)
+            # Adicione aqui o arquivo do seu logo passarinho, se disponível na pasta
+            # st.image("passaro_logo.png", width=60) 
+            
+            st.markdown("<h1 style='margin:0;'>Portal de Pedidos</h1>", unsafe_allow_html=True)
+            st.markdown("<p style='color:#64748b;'>Folhagem — Molicenter</p>", unsafe_allow_html=True)
             st.divider()
             
-            lista_usuarios = ["Selecione o usuário..."] + list(USUARIOS_DB.keys())
-            user_input = st.selectbox("Usuário de acesso:", lista_usuarios)
+            lista_usuarios = ["Selecione..."] + list(USUARIOS_DB.keys())
+            user_input = st.selectbox("👤 Usuário de acesso:", lista_usuarios)
+            pass_input = st.text_input("🔑 Senha de acesso:", type="password", placeholder="••••••••", autocomplete="current-password")
             
-            pass_input = st.text_input("Senha de acesso:", type="password", placeholder="••••••••", autocomplete="current-password")
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            if st.button("Entrar no Sistema", use_container_width=True, type="primary"):
-                if user_input != "Selecione o usuário...":
+            if st.button("Entrar no Sistema", use_container_width=True):
+                if user_input != "Selecione...":
                     user_clean = user_input.strip().lower()
                     if user_clean in USUARIOS_DB and USUARIOS_DB[user_clean]["senha"] == pass_input:
                         st.session_state["logado_despesas"] = True
@@ -103,9 +118,8 @@ if not st.session_state["logado_despesas"]:
                     else:
                         st.error("Senha incorreta.")
                 else:
-                    st.warning("Selecione um usuário válido.")
+                    st.warning("Selecione um usuário.")
     st.stop()
-
 # =========================================================
 # 3. FUNÇÕES DE DADOS E CABEÇALHO SUPERIOR
 # =========================================================
