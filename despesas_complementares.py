@@ -4,7 +4,7 @@ import requests
 import json
 from datetime import datetime
 import time
-import io # Necessário para a exportação do Excel
+import io
 
 # =========================================================
 # 1. CONFIGURAÇÕES INICIAIS
@@ -91,6 +91,7 @@ if not st.session_state["logado_despesas"]:
             
             lista_usuarios = ["Selecione o usuário..."] + list(USUARIOS_DB.keys())
             user_input = st.selectbox("Usuário de acesso:", lista_usuarios)
+            
             pass_input = st.text_input("Senha de acesso:", type="password", placeholder="••••••••", autocomplete="current-password")
             
             st.markdown("<br>", unsafe_allow_html=True)
@@ -137,6 +138,7 @@ df_base = carregar_dados()
 perfil = st.session_state["perfil"]
 loja_fixa = st.session_state["loja_fixa"]
 
+# CABEÇALHO SUPERIOR
 col_title, col_info, col_btn = st.columns([0.65, 0.25, 0.1])
 with col_title:
     st.markdown("<h2 style='margin:0; padding:0;'>💸 Despesas Complementares</h2>", unsafe_allow_html=True)
@@ -145,7 +147,7 @@ with col_info:
 with col_btn:
     st.markdown("<div style='margin-top: 5px;'>", unsafe_allow_html=True)
     if st.button("🚪 Sair", use_container_width=True):
-        st.session_state.clear()
+        st.session_state.clear() 
         st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -155,6 +157,7 @@ st.markdown("<hr style='margin-top: 5px; margin-bottom: 25px;'>", unsafe_allow_h
 # 4. INTERFACE PRINCIPAL
 # =========================================================
 
+# --- VISÃO DA LOJA (DIGITAÇÃO) ---
 if perfil == "loja":
     st.info(f"📍 Módulo de Lançamentos - **Loja {loja_fixa:02d}**")
     
@@ -273,6 +276,7 @@ if perfil == "loja":
         st.info("O banco de dados ainda está vazio.")
 
 
+# --- VISÃO GERENCIAL / SUPERVISOR ---
 elif perfil in ["admin", "supervisor"]:
     st.success("🌐 Visão Consolidada - Painel de Aprovação")
     
@@ -382,15 +386,11 @@ elif perfil in ["admin", "supervisor"]:
             if df_historico.empty:
                 st.info("Nenhuma despesa foi avaliada ainda.")
             else:
-                # Ordena por Loja e depois pela Data de registro (mais recentes primeiro)
                 df_historico = df_historico.sort_values(by=['Loja', 'Carimbo de Data/Hora'], ascending=[True, False]).reset_index(drop=True)
-                
                 df_view = df_historico.copy()
                 
-                # Formata a coluna Valor para exibir com R$
                 df_view['Valor'] = df_view['Valor'].apply(lambda x: f"R$ {float(x):,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
                 
-                # Função de cor para a coluna Autorização
                 def highlight_status(val):
                     if val == 'Aprovado':
                         return 'color: #10b981; font-weight: bold;'
@@ -402,26 +402,15 @@ elif perfil in ["admin", "supervisor"]:
                 
                 st.markdown("<br>", unsafe_allow_html=True)
                 
-                # Exportação para Excel
+                # Exportação apenas para Excel
                 buffer = io.BytesIO()
-                try:
-                    with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                        df_view.to_excel(writer, index=False, sheet_name='Histórico')
-                    
-                    st.download_button(
-                        label="📊 Exportar Histórico para Excel",
-                        data=buffer.getvalue(),
-                        file_name=f"historico_despesas_{datetime.now().strftime('%d%m%Y')}.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        type="primary"
-                    )
-                except Exception as e:
-                    # Fallback de segurança para CSV caso falte pacote no servidor
-                    csv = df_view.to_csv(index=False, sep=';', encoding='utf-8-sig')
-                    st.download_button(
-                        label="📊 Exportar Histórico para CSV",
-                        data=csv,
-                        file_name=f"historico_despesas_{datetime.now().strftime('%d%m%Y')}.csv",
-                        mime="text/csv",
-                        type="primary"
-                    )
+                with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+                    df_view.to_excel(writer, index=False, sheet_name='Histórico')
+                
+                st.download_button(
+                    label="📊 Exportar Histórico (Excel)",
+                    data=buffer.getvalue(),
+                    file_name=f"historico_despesas_{datetime.now().strftime('%d%m%Y')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    type="primary"
+                )
