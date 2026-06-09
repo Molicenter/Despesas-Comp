@@ -9,12 +9,23 @@ import time
 # =========================================================
 # 1. CONFIGURAÇÕES INICIAIS
 # =========================================================
-st.set_page_config(page_title="Despesas Complementares - Molicenter", layout="wide")
+st.set_page_config(
+    page_title="Despesas Complementares - Molicenter", 
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-# COLE AQUI A URL GERADA NO GOOGLE APPS SCRIPT
+# Oculta completamente a seta de abrir o menu lateral do Streamlit
+st.markdown("""
+    <style>
+    [data-testid="collapsedControl"] {display: none;}
+    </style>
+""", unsafe_allow_html=True)
+
+# URL GERADA NO GOOGLE APPS SCRIPT
 URL_API_DESPESAS = "https://script.google.com/macros/s/AKfycbwbOdR--mh46XzwbUId8P4OsxQ8-T8ItbE4JwErh10qwMLWWt1S1vYUIFkK1mnzkxArYw/exec" 
 
-# Banco de Usuários (Você pode ajustar conforme as lojas reais)
+# Banco de Usuários
 USUARIOS_DB = {
     "admin@molicenter.com.br": {"senha": "moli0000", "perfil": "admin", "loja_fixa": None},
     "supervisor@molicenter.com.br": {"senha": "moli0000", "perfil": "supervisor", "loja_fixa": None},
@@ -29,7 +40,7 @@ USUARIOS_DB = {
     "loja30@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 30},
 }
 
-# Opções atualizadas conforme as imagens enviadas
+# Opções de Seleção
 OPCOES_MOTIVO = [
     "Ajuste Modular", 
     "Despesas (Justificar)", 
@@ -74,14 +85,15 @@ if not st.session_state["logado_despesas"]:
     
     with col_centro:
         with st.container(border=True):
-            st.markdown("<h2 style='text-align: center; color: #0ea5e9;'>Molicenter</h2>", unsafe_allow_html=True)
-            st.markdown("<h4 style='text-align: center; color: #64748b; margin-top: -15px;'>Portal de Despesas Complementares</h4>", unsafe_allow_html=True)
+            st.markdown("<h2 style='text-align: center; color: #0ea5e9; margin-bottom: 0;'>Molicenter</h2>", unsafe_allow_html=True)
+            st.markdown("<h4 style='text-align: center; color: #64748b; margin-top: 5px;'>Portal de Despesas Complementares</h4>", unsafe_allow_html=True)
             st.divider()
             
             lista_usuarios = ["Selecione o usuário..."] + list(USUARIOS_DB.keys())
             user_input = st.selectbox("Usuário de acesso:", lista_usuarios)
-            pass_input = st.text_input("Senha de acesso:", type="password")
+            pass_input = st.text_input("Senha de acesso:", type="password", placeholder="••••••••")
             
+            st.markdown("<br>", unsafe_allow_html=True)
             if st.button("Entrar no Sistema", use_container_width=True, type="primary"):
                 if user_input != "Selecione o usuário...":
                     user_clean = user_input.strip().lower()
@@ -98,39 +110,45 @@ if not st.session_state["logado_despesas"]:
     st.stop()
 
 # =========================================================
-# 3. FUNÇÕES DE DADOS
+# 3. FUNÇÕES DE DADOS E CABEÇALHO SUPERIOR
 # =========================================================
-@st.cache_data(ttl=10)
+@st.cache_data(ttl=5)
 def carregar_dados():
-    if URL_API_DESPESAS == "COLE_SUA_URL_AQUI":
-        return pd.DataFrame()
     try:
-        res = requests.get(URL_API_DESPESAS)
+        res = requests.get(URL_API_DESPESAS, timeout=10)
         if res.status_code == 200:
             return pd.DataFrame(res.json())
     except Exception as e:
-        st.error("Erro ao conectar com a planilha.")
+        st.error("Erro ao conectar com a planilha do Google.")
     return pd.DataFrame()
 
 df_base = carregar_dados()
 
-# =========================================================
-# 4. INTERFACE PRINCIPAL
-# =========================================================
 perfil = st.session_state["perfil"]
 loja_fixa = st.session_state["loja_fixa"]
 
-st.sidebar.markdown(f"**Usuário:** `{st.session_state['usuario']}`")
-st.sidebar.markdown(f"**Nível:** `{perfil.upper()}`")
-if st.sidebar.button("🚪 Sair"):
-    st.session_state["logado_despesas"] = False
-    st.rerun()
+# CABEÇALHO SUPERIOR (Substitui o menu lateral)
+col_title, col_info, col_btn = st.columns([0.65, 0.25, 0.1])
+with col_title:
+    st.markdown("<h2 style='margin:0; padding:0;'>💸 Despesas Complementares</h2>", unsafe_allow_html=True)
+with col_info:
+    st.markdown(f"<div style='text-align: right; margin-top: 5px; color: #cbd5e1; font-size: 14px;'><b>Usuário:</b> {st.session_state['usuario']}<br><b>Nível:</b> {perfil.upper()}</div>", unsafe_allow_html=True)
+with col_btn:
+    st.markdown("<div style='margin-top: 5px;'>", unsafe_allow_html=True)
+    if st.button("🚪 Sair", use_container_width=True):
+        st.session_state["logado_despesas"] = False
+        st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
 
-st.title("💸 Despesas Complementares")
+st.markdown("<hr style='margin-top: 5px; margin-bottom: 25px;'>", unsafe_allow_html=True)
+
+# =========================================================
+# 4. INTERFACE PRINCIPAL
+# =========================================================
 
 # --- VISÃO DA LOJA (DIGITAÇÃO) ---
 if perfil == "loja":
-    st.info(f"📍 Lançamentos - Loja {loja_fixa:02d}")
+    st.info(f"📍 Módulo de Lançamentos - **Loja {loja_fixa:02d}**")
     
     with st.form("form_despesa", clear_on_submit=True):
         col1, col2 = st.columns(2)
@@ -143,47 +161,72 @@ if perfil == "loja":
             valor = st.number_input("Valor (R$) *", min_value=0.0, step=10.0, format="%.2f")
             obs = st.text_area("Observações", placeholder="Justificativa ou transferência...")
             
-        submit = st.form_submit_button("Registrar Despesa", type="primary", use_container_width=True)
+        st.markdown("<br>", unsafe_allow_html=True)
+        submit = st.form_submit_button("💾 Registrar Despesa", type="primary", use_container_width=True)
         
         if submit:
-            if not nome:
-                st.error("O campo Nome é obrigatório.")
+            if not nome.strip():
+                st.error("⚠️ O campo Nome é obrigatório.")
+            elif valor <= 0:
+                st.error("⚠️ O campo Valor deve ser maior que zero.")
             else:
-                with st.spinner("Enviando dados..."):
+                with st.spinner("⏳ Enviando dados para o Google Sheets..."):
                     payload = {
                         "Loja": loja_fixa,
-                        "Nome": nome.upper(),
+                        "Nome": nome.upper().strip(),
                         "Motivo": motivo,
-                        "Observacoes": obs,
+                        "Observacoes": obs.strip() if obs else "-",
                         "Departamento": depto,
                         "DataTrabalhada": data_trab.strftime("%d/%m/%Y"),
                         "Valor": valor,
                         "Autorizacao": "Pendente"
                     }
+                    
+                    sucesso = False
                     try:
-                        requests.post(URL_API_DESPESAS, json=payload)
-                        st.success("✅ Despesa registrada com sucesso!")
-                        st.cache_data.clear()
-                        time.sleep(1)
-                        st.rerun()
-                    except:
-                        st.error("Erro ao salvar os dados.")
+                        # Faz a requisição de postagem de dados
+                        requests.post(URL_API_DESPESAS, json=payload, timeout=10)
+                        sucesso = True
+                    except Exception as e:
+                        st.error(f"Erro de conexão ao salvar os dados: {e}")
+                    
+                # Roda a limpeza e recarregamento FORA do try/except
+                if sucesso:
+                    st.success("✅ Despesa registrada com sucesso!")
+                    st.cache_data.clear()
+                    time.sleep(1.5)
+                    st.rerun()
 
     st.markdown("---")
-    st.subheader("Seus Registros Recentes")
+    st.markdown("### 📋 Seus Registros Recentes")
     if not df_base.empty:
-        df_loja = df_base[df_base['Loja'] == loja_fixa]
-        st.dataframe(df_loja, use_container_width=True, hide_index=True)
+        try:
+            # Filtra apenas a loja atual
+            df_loja = df_base[df_base['Loja'].astype(str) == str(loja_fixa)].copy()
+            
+            if not df_loja.empty:
+                # Opcional: inverte a tabela para os últimos aparecerem primeiro
+                df_loja = df_loja.iloc[::-1].reset_index(drop=True)
+                
+                # Exibe a tabela bonitinha
+                st.dataframe(df_loja, use_container_width=True, hide_index=True)
+            else:
+                st.info("Nenhum registro encontrado para a sua loja até o momento.")
+        except:
+            st.dataframe(df_base, use_container_width=True, hide_index=True)
+    else:
+        st.info("O banco de dados ainda está vazio.")
 
 # --- VISÃO GERENCIAL / SUPERVISOR ---
 elif perfil in ["admin", "supervisor"]:
     st.success("🌐 Visão Consolidada - Todas as Lojas")
     
     if df_base.empty:
-        st.warning("Nenhum dado encontrado ou API não configurada.")
+        st.warning("Nenhum dado encontrado ou planilha vazia.")
     else:
-        # Formatação de exibição
         df_exibicao = df_base.copy()
+        
+        # Garante que a coluna valor seja numérica para a soma
         if 'Valor' in df_exibicao.columns:
             df_exibicao['Valor'] = pd.to_numeric(df_exibicao['Valor'], errors='coerce').fillna(0)
             
@@ -191,8 +234,25 @@ elif perfil in ["admin", "supervisor"]:
         total_despesas = df_exibicao['Valor'].sum()
         total_registros = len(df_exibicao)
         
-        col_m1.metric("Total de Registros", total_registros)
-        col_m2.metric("Valor Total Acumulado", f"R$ {total_despesas:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+        with col_m1:
+            st.markdown(f"""
+            <div style='background-color:#1e293b; padding:15px; border-radius:8px; border:1px solid #334155; text-align:center;'>
+                <p style='margin:0; font-size:14px; color:#cbd5e1;'>Total de Registros</p>
+                <h2 style='margin:0; color:#38bdf8;'>{total_registros}</h2>
+            </div>
+            """, unsafe_allow_html=True)
+            
+        with col_m2:
+            st.markdown(f"""
+            <div style='background-color:#1e293b; padding:15px; border-radius:8px; border:1px solid #334155; text-align:center;'>
+                <p style='margin:0; font-size:14px; color:#cbd5e1;'>Valor Total Acumulado</p>
+                <h2 style='margin:0; color:#10b981;'>R$ {total_despesas:,.2f}</h2>
+            </div>
+            """.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
         
-        st.markdown("### Detalhamento Geral")
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("### 📊 Detalhamento Geral")
+        
+        # Inverte para ver os últimos lançamentos primeiro
+        df_exibicao = df_exibicao.iloc[::-1].reset_index(drop=True)
         st.dataframe(df_exibicao, use_container_width=True, hide_index=True)
