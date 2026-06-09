@@ -21,62 +21,76 @@ st.markdown("""
     <style>
     [data-testid="collapsedControl"] {display: none;}
     
-    /* Ajuste para tabela HTML nativa ocupar 100% da largura na tela normal */
-    [data-testid="stTable"] table {
+    /* 1. Libera a tabela do Streamlit para crescer infinitamente sem barra de rolagem */
+    [data-testid="stTable"], [data-testid="stTable"] > div {
         width: 100% !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
     }
 
     /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA --- */
     @media print {
-        /* 1. Força o modo PAISAGEM e define margens limpas */
+        /* Define PAISAGEM e margens */
         @page {
             size: landscape;
             margin: 1cm;
         }
         
-        /* 2. Ajusta o zoom para um tamanho confortável e nítido na folha deitada */
-        body {
-            zoom: 0.85; 
-        }
+        body { zoom: 0.85; }
 
-        /* 3. Esconde botões, barras de ferramentas e frames estruturais do Streamlit */
+        /* Esconde menus e botões */
         header, footer, [data-testid="stToolbar"], [data-testid="stManageApp"], button, iframe { 
             display: none !important; 
         }
         
-        /* 4. Força o fundo branco absoluto na página e libera para imprimir múltiplas páginas */
+        /* Fundo totalmente branco e sem cortes */
         html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], main, .stApp {
             background-color: #FFFFFF !important;
             background: #FFFFFF !important;
             height: auto !important;
             overflow: visible !important;
+            display: block !important;
+        }
+
+        /* CORREÇÃO DA SOBREPOSIÇÃO: Obriga todos os blocos a respeitarem o tamanho real da tabela */
+        [data-testid="stVerticalBlock"], [data-testid="stHorizontalBlock"] {
+            height: auto !important;
+            overflow: visible !important;
+            display: block !important;
         }
         
-        /* 5. Garante que os textos, rótulos e tabelas fiquem em preto puro */
-        p, h1, h2, h3, h4, h5, h6, span, label, th, td { 
-            color: #000000 !important; 
+        /* Ajuste para as colunas de assinatura ficarem lado a lado mesmo após forçar os blocos */
+        [data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            page-break-inside: avoid !important;
         }
+
+        /* Cores em preto puro para contraste */
+        p, h1, h2, h3, h4, h5, h6, span, label, th, td { color: #000000 !important; }
         
-        /* 6. Inverte a cor apenas das tabelas Canvas antigas (st.data_editor) */
-        [data-testid="stDataFrame"] {
-            filter: invert(1) hue-rotate(180deg) contrast(1.2) !important;
-        }
-        
-        /* 7. Estiliza os cards de indicadores para o papel (fundo branco e borda preta) */
+        /* Cards brancos */
         .print-card {
             background-color: #FFFFFF !important; 
             border: 1.5px solid #000000 !important;
             box-shadow: none !important;
         }
-        
-        /* 8. Garante contraste total dos textos internos dos cards */
-        .print-card p, .print-card h2 {
-            color: #000000 !important;
-        }
+        .print-card p, .print-card h2 { color: #000000 !important; }
 
-        /* 9. MÁGICA DA QUEBRA DE PÁGINA: Ensina o navegador a cortar a st.table entre folhas */
-        table { page-break-inside: auto !important; }
-        tr    { page-break-inside: avoid !important; page-break-after: auto !important; }
+        /* MÁGICA DA QUEBRA DE PÁGINA NAS TABELAS */
+        table { 
+            page-break-inside: auto !important; 
+            border-collapse: collapse !important; 
+            width: 100% !important; 
+        }
+        tr { 
+            page-break-inside: avoid !important; 
+            page-break-after: auto !important; 
+        }
+        th, td { 
+            border-bottom: 1px solid #ddd !important; 
+            padding: 8px !important; 
+        }
         thead { display: table-header-group !important; }
         tfoot { display: table-footer-group !important; }
 
@@ -484,14 +498,11 @@ elif perfil in ["admin", "supervisor"]:
             # df_tela será usado apenas na visualização
             df_tela = df_view.copy()
             
-            # Removemos a coluna do carimbo para dar mais espaço no papel
             if 'Carimbo de Data/Hora' in df_tela.columns:
                 df_tela = df_tela.drop(columns=['Carimbo de Data/Hora'])
 
-            # Encurtamos o nome da última coluna para otimizar espaço
             df_tela.rename(columns={'Autorização Supervisor': 'Status'}, inplace=True)
 
-            # Função de colorir aprovados/reprovados
             def highlight_status(val):
                 if val == 'Aprovado':
                     return 'color: #10b981; font-weight: bold;'
@@ -499,13 +510,10 @@ elif perfil in ["admin", "supervisor"]:
                     return 'color: #ef4444; font-weight: bold;'
                 return ''
 
-            # A GRANDE MUDANÇA: Em vez de st.dataframe, usamos st.table para gerar HTML nativo
-            # Isso garante que a tabela quebre perfeitamente nas páginas impressas
+            # Usamos st.table para gerar a tabela em HTML real (para cortar na impressão)
             try:
-                # hide(axis="index") esconde a primeira coluna de números (1, 2, 3...)
                 styled_tela = df_tela.style.map(highlight_status, subset=['Status']).hide(axis="index")
             except:
-                # Fallback de segurança para versões do pandas
                 styled_tela = df_tela.style.map(highlight_status, subset=['Status']).hide_index()
             
             st.table(styled_tela)
@@ -540,16 +548,11 @@ elif perfil in ["admin", "supervisor"]:
                 _, col_tabela_centro, _ = st.columns([1, 2, 1])
                 
                 with col_tabela_centro:
-                    st.dataframe(
-                        resumo_lojas, 
-                        use_container_width=True, 
-                        hide_index=True,
-                        column_config={
-                            "Loja": st.column_config.NumberColumn("Loja", width="small"),
-                            "Qtde": st.column_config.NumberColumn("Qtde", width="small"),
-                            "R$": st.column_config.TextColumn("R$", width="small")
-                        }
-                    )
+                    # Também passamos o resumo para st.table para estabilidade
+                    try:
+                        st.table(resumo_lojas.style.hide(axis="index"))
+                    except:
+                        st.table(resumo_lojas.style.hide_index())
             else:
                 st.info("Nenhuma despesa aprovada até o momento.")
 
