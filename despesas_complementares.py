@@ -9,10 +9,6 @@ import io
 # =========================================================
 # 1. CONFIGURAÇÕES INICIAIS
 # =========================================================
-
-pasta_atual = os.path.dirname(__file__)
-caminho_imagem = os.path.join(pasta_atual, "passaro_logo.png")
-
 st.set_page_config(
     page_title="Despesas Complementares - Molicenter", 
     layout="wide",
@@ -25,7 +21,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-URL_API_DESPESAS = "https://script.google.com/macros/s/AKfycbwbOdR--mh46XzwbUId8P4OsxQ8-T8ItbE4JwErh10qwMLWWt1S1vYUIFkK1mnzkxArYw/exec" 
+URL_API_DESPESAS = https://script.google.com/macros/s/AKfycbwbOdR--mh46XzwbUId8P4OsxQ8-T8ItbE4JwErh10qwMLWWt1S1vYUIFkK1mnzkxArYw/exec"" "
 
 USUARIOS_DB = {
     "administrador@molicenter.com.br": {"senha": "moli0000", "perfil": "admin", "loja_fixa": None},
@@ -77,57 +73,26 @@ if "logado_despesas" not in st.session_state:
     st.session_state["loja_fixa"] = None
 
 # =========================================================
-# 2. TELA DE LOGIN (PADRONIZADA)
+# 2. TELA DE LOGIN
 # =========================================================
 if not st.session_state["logado_despesas"]:
-    # Estilização CSS para o botão ficar verde como no outro portal
-    st.markdown("""
-        <style>
-        div.stButton > button {
-            background-color: #2e7d32 !important; 
-            color: white !important; 
-            font-weight: bold;
-        }
-        div.stButton > button:hover {
-            background-color: #1b5e20 !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
     st.markdown("<br><br>", unsafe_allow_html=True)
-    _, col_centro, _ = st.columns([1, 1.5, 1])
+    _, col_centro, _ = st.columns([1, 1.2, 1])
     
     with col_centro:
-        with st.container(border=True): # Descomente esta linha (tire o #)
-           # --- Cabeçalho Elegante ---
-            col_titulo, col_logo = st.columns([3, 1])
-            
-            with col_titulo:
-                st.markdown("""
-                    <div style="padding-top: 5px;">
-                        <h1 style='margin:0; font-size: 24px;'>Despesas Complementares</h1>
-                        <p style='color:#64748b; margin:0;'>Molicenter</p>
-                    </div>
-                """, unsafe_allow_html=True)
-            
-           with col_logo:
-    if os.path.exists(caminho_imagem):
-        st.image(caminho_imagem, width=60)
-    else:
-        st.warning("Arquivo não encontrado!") # Isso vai te
-            
-            st.divider()
-                # DICA: Se preferir usar o st.image, mantenha como estava, 
-                # mas o CSS acima ajuda a posicionar melhor.
-            
+        with st.container(border=True):
+            st.markdown("<h2 style='text-align: center; color: #0ea5e9; margin-bottom: 0;'>Molicenter</h2>", unsafe_allow_html=True)
+            st.markdown("<h4 style='text-align: center; color: #64748b; margin-top: 5px;'>Portal de Despesas Complementares</h4>", unsafe_allow_html=True)
             st.divider()
             
-            lista_usuarios = ["Selecione..."] + list(USUARIOS_DB.keys())
-            user_input = st.selectbox("👤 Usuário de acesso:", lista_usuarios)
-            pass_input = st.text_input("🔑 Senha de acesso:", type="password", placeholder="••••••••", autocomplete="current-password")
+            lista_usuarios = ["Selecione o usuário..."] + list(USUARIOS_DB.keys())
+            user_input = st.selectbox("Usuário de acesso:", lista_usuarios)
             
-            if st.button("Entrar no Sistema", use_container_width=True):
-                if user_input != "Selecione...":
+            pass_input = st.text_input("Senha de acesso:", type="password", placeholder="••••••••", autocomplete="current-password")
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            if st.button("Entrar no Sistema", use_container_width=True, type="primary"):
+                if user_input != "Selecione o usuário...":
                     user_clean = user_input.strip().lower()
                     if user_clean in USUARIOS_DB and USUARIOS_DB[user_clean]["senha"] == pass_input:
                         st.session_state["logado_despesas"] = True
@@ -138,8 +103,9 @@ if not st.session_state["logado_despesas"]:
                     else:
                         st.error("Senha incorreta.")
                 else:
-                    st.warning("Selecione um usuário.")
+                    st.warning("Selecione um usuário válido.")
     st.stop()
+
 # =========================================================
 # 3. FUNÇÕES DE DADOS E CABEÇALHO SUPERIOR
 # =========================================================
