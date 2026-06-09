@@ -104,7 +104,7 @@ st.markdown("""
         .custom-table table, .custom-table th, .custom-table td {
             color: #000000 !important;
             border-bottom: 1px solid #999999 !important;
-            font-size: 9px !important;
+            font-size: 11px !important;
         }
         table { 
             page-break-inside: auto !important; 
