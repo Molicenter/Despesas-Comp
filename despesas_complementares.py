@@ -456,86 +456,87 @@ elif perfil in ["admin", "supervisor"]:
                 hide_index=True
             )
 
-            st.markdown("<br>", unsafe_allow_html=True)
-
-            # Linha de botões: Exportar Excel + Limpar Registros
-            if perfil == "admin":
-                col_export, col_clear = st.columns([0.5, 0.5])
-            else:
-                col_export, _ = st.columns([0.3, 0.7])
-
-            # --- Botão Exportar Excel ---
-            buffer = io.BytesIO()
-            with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                df_view.to_excel(writer, index=False, sheet_name='Histórico')
-
-            with col_export:
-                st.download_button(
-                    label="📊 Exportar Histórico (Excel)",
-                    data=buffer.getvalue(),
-                    file_name=f"historico_despesas_{datetime.now().strftime('%d%m%Y')}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    type="primary"
-                )
-
-            # --- Botão Limpar Registros (somente admin) ---
-            if perfil == "admin":
-                @st.dialog("⚠️ Confirmar Limpeza de Registros")
-                def dialog_limpar():
-                    st.warning(
-                        "Esta ação irá **apagar TODOS os registros** da planilha de forma permanente, "
-                        "preparando o sistema para uma nova semana.\n\n"
-                        "**Esta operação não pode ser desfeita.**"
-                    )
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    col_sim, col_nao = st.columns(2)
-
-                    with col_sim:
-                        if st.button("✅ Sim, limpar tudo", type="primary", use_container_width=True):
-                            with st.spinner("🗑️ Limpando todos os registros..."):
-                                payload_clear = {"action": "clear_all"}
-                                sucesso_clear = False
-                                try:
-                                    requests.post(URL_API_DESPESAS, json=payload_clear, timeout=20)
-                                    sucesso_clear = True
-                                except Exception as e:
-                                    st.error(f"Erro ao limpar: {e}")
-
-                            if sucesso_clear:
-                                st.success("✅ Todos os registros foram removidos!")
-                                st.cache_data.clear()
-                                time.sleep(1.5)
-                                st.rerun()
-
-                    with col_nao:
-                        if st.button("❌ Cancelar", use_container_width=True):
-                            st.rerun()
-
-                with col_clear:
-                    if st.button("🗑️ Limpar Registros (Nova Semana)", use_container_width=True):
-                        dialog_limpar()
-
         # =========================================================
         # BLOCO DE ASSINATURAS NO RODAPÉ
         # =========================================================
-        st.markdown("<br><br><br><br>", unsafe_allow_html=True)
+        st.markdown("<br><br>", unsafe_allow_html=True)
         
-        col_sig1, col_space, col_sig2 = st.columns([1, 1.5, 1])
+        # Ajustamos a proporção para 0.7 nas pontas. Isso diminui a largura das imagens.
+        col_sig1, col_space, col_sig2 = st.columns([0.7, 2.5, 0.7])
         
         with col_sig1:
             if os.path.exists("Luciana.png"):
                 st.image("Luciana.png", use_container_width=True)
             else:
-                st.markdown("<br><br><br>", unsafe_allow_html=True)
-            
-            st.markdown("<hr style='margin:0px; border-top: 1px solid #94a3b8;'>", unsafe_allow_html=True)
-            st.markdown("<p style='text-align: center; margin-top: 5px; color:#cbd5e1; font-size:14px;'><b>LUCIANA GRESPAN</b><br>Encarregada DP</p>", unsafe_allow_html=True)
+                st.markdown("<br><br>", unsafe_allow_html=True)
+            # Obs: Textos e linhas extras removidos pois a imagem já os contém
 
         with col_sig2:
             if os.path.exists("Adriano.png"):
                 st.image("Adriano.png", use_container_width=True)
             else:
-                st.markdown("<br><br><br>", unsafe_allow_html=True)
-            
-            st.markdown("<hr style='margin:0px; border-top: 1px solid #94a3b8;'>", unsafe_allow_html=True)
-            st.markdown("<p style='text-align: center; margin-top: 5px; color:#cbd5e1; font-size:14px;'><b>Adriano Martins</b><br>Analista Comercial</p>", unsafe_allow_html=True)
+                st.markdown("<br><br>", unsafe_allow_html=True)
+            # Obs: Textos e linhas extras removidos pois a imagem já os contém
+
+        # Linha separadora antes dos botões
+        st.markdown("<br><hr>", unsafe_allow_html=True)
+
+        # =========================================================
+        # BOTÕES DE EXPORTAR E LIMPAR (NO FINAL DA PÁGINA)
+        # =========================================================
+        # Linha de botões: Exportar Excel + Limpar Registros
+        if perfil == "admin":
+            col_export, col_clear = st.columns([0.5, 0.5])
+        else:
+            col_export, _ = st.columns([0.3, 0.7])
+
+        # --- Botão Exportar Excel ---
+        buffer = io.BytesIO()
+        with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+            df_view.to_excel(writer, index=False, sheet_name='Histórico')
+
+        with col_export:
+            st.download_button(
+                label="📊 Exportar Histórico (Excel)",
+                data=buffer.getvalue(),
+                file_name=f"historico_despesas_{datetime.now().strftime('%d%m%Y')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                type="primary"
+            )
+
+        # --- Botão Limpar Registros (somente admin) ---
+        if perfil == "admin":
+            @st.dialog("⚠️ Confirmar Limpeza de Registros")
+            def dialog_limpar():
+                st.warning(
+                    "Esta ação irá **apagar TODOS os registros** da planilha de forma permanente, "
+                    "preparando o sistema para uma nova semana.\n\n"
+                    "**Esta operação não pode ser desfeita.**"
+                )
+                st.markdown("<br>", unsafe_allow_html=True)
+                col_sim, col_nao = st.columns(2)
+
+                with col_sim:
+                    if st.button("✅ Sim, limpar tudo", type="primary", use_container_width=True):
+                        with st.spinner("🗑️ Limpando todos os registros..."):
+                            payload_clear = {"action": "clear_all"}
+                            sucesso_clear = False
+                            try:
+                                requests.post(URL_API_DESPESAS, json=payload_clear, timeout=20)
+                                sucesso_clear = True
+                            except Exception as e:
+                                st.error(f"Erro ao limpar: {e}")
+
+                        if sucesso_clear:
+                            st.success("✅ Todos os registros foram removidos!")
+                            st.cache_data.clear()
+                            time.sleep(1.5)
+                            st.rerun()
+
+                with col_nao:
+                    if st.button("❌ Cancelar", use_container_width=True):
+                        st.rerun()
+
+            with col_clear:
+                if st.button("🗑️ Limpar Registros (Nova Semana)", use_container_width=True):
+                    dialog_limpar()
