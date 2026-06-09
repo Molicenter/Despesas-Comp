@@ -321,8 +321,35 @@ elif perfil in ["admin", "supervisor"]:
         card_metrica(col2, "Aprovados", len(df_aprovados), df_aprovados['Valor'].sum(), "#10b981")
         card_metrica(col3, "Reprovados", len(df_reprovados), df_reprovados['Valor'].sum(), "#ef4444")
         card_metrica(col4, "Total Geral", len(df_exibicao), df_exibicao['Valor'].sum(), "#38bdf8")
-        
+       
+             # --- NOVO BLOCO: RESUMO POR LOJA (APROVADOS) ---
         st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("### 🏪 Resumo de Aprovados por Loja")
+        
+        if not df_aprovados.empty:
+            resumo_lojas = df_aprovados.groupby('Loja').agg(
+                Qtde=('Valor', 'count'),
+                Total_RS=('Valor', 'sum')
+            ).reset_index()
+            
+            resumo_lojas['Total_RS'] = resumo_lojas['Total_RS'].apply(lambda x: f"R$ {x:,.2f}")
+            resumo_lojas.rename(columns={'Loja': 'Loja', 'Qtde': 'Qtde', 'Total_RS': 'R$'}, inplace=True)
+            
+            # Ajuste: usamos o st.dataframe com config para limitar a largura
+            st.dataframe(
+                resumo_lojas, 
+                use_container_width=False, # Não ocupa a tela toda
+                hide_index=True,
+                column_config={
+                    "Loja": st.column_config.NumberColumn("Loja", width="small"),
+                    "Qtde": st.column_config.NumberColumn("Qtde", width="small"),
+                    "R$": st.column_config.TextColumn("R$", width="medium")
+                }
+            )
+        else:
+            st.info("Nenhuma despesa aprovada até o momento.")
+
+         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("### ⏳ Avaliação em Lote (Lançamentos Pendentes)")
        
                
@@ -393,32 +420,6 @@ elif perfil in ["admin", "supervisor"]:
                             time.sleep(1.5)
                             st.rerun()
 
-      # --- NOVO BLOCO: RESUMO POR LOJA (APROVADOS) ---
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("### 🏪 Resumo de Aprovados por Loja")
-        
-        if not df_aprovados.empty:
-            resumo_lojas = df_aprovados.groupby('Loja').agg(
-                Qtde=('Valor', 'count'),
-                Total_RS=('Valor', 'sum')
-            ).reset_index()
-            
-            resumo_lojas['Total_RS'] = resumo_lojas['Total_RS'].apply(lambda x: f"R$ {x:,.2f}")
-            resumo_lojas.rename(columns={'Loja': 'Loja', 'Qtde': 'Qtde', 'Total_RS': 'R$'}, inplace=True)
-            
-            # Ajuste: usamos o st.dataframe com config para limitar a largura
-            st.dataframe(
-                resumo_lojas, 
-                use_container_width=False, # Não ocupa a tela toda
-                hide_index=True,
-                column_config={
-                    "Loja": st.column_config.NumberColumn("Loja", width="small"),
-                    "Qtde": st.column_config.NumberColumn("Qtde", width="small"),
-                    "R$": st.column_config.TextColumn("R$", width="medium")
-                }
-            )
-        else:
-            st.info("Nenhuma despesa aprovada até o momento.")
 
         # =========================================================
         # TABELA CONSOLIDADA (substitui o expander de histórico)
