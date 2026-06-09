@@ -292,26 +292,23 @@ elif perfil in ["admin", "supervisor"]:
        # Estrutura com 4 colunas para o resumo
         col1, col2, col3, col4 = st.columns(4)
         
-        col1.metric("Pendentes", len(df_pendentes), f"R$ {df_pendentes['Valor'].sum():,.2f}")
-        col2.metric("Aprovados", len(df_aprovados), f"R$ {df_aprovados['Valor'].sum():,.2f}")
-        col3.metric("Reprovados", len(df_reprovados), f"R$ {df_reprovados['Valor'].sum():,.2f}")
-        col4.metric("Total Geral", len(df_exibicao), f"R$ {df_exibicao['Valor'].sum():,.2f}")
-        
-        with col_m1:
-            st.markdown(f"""
+        # Função para criar os cards estilizados
+        def card_metrica(coluna, titulo, qtd, valor, cor_valor):
+            coluna.markdown(f"""
             <div style='background-color:#1e293b; padding:15px; border-radius:8px; border:1px solid #334155; text-align:center;'>
-                <p style='margin:0; font-size:14px; color:#cbd5e1;'>Aguardando Aprovação (Qtd)</p>
-                <h2 style='margin:0; color:#fbbf24;'>{total_pendente_qtd}</h2>
-            </div>
-            """, unsafe_allow_html=True)
-            
-        with col_m2:
-            st.markdown(f"""
-            <div style='background-color:#1e293b; padding:15px; border-radius:8px; border:1px solid #334155; text-align:center;'>
-                <p style='margin:0; font-size:14px; color:#cbd5e1;'>Valor Pendente</p>
-                <h2 style='margin:0; color:#fbbf24;'>R$ {total_pendente_valor:,.2f}</h2>
+                <p style='margin:0; font-size:12px; color:#cbd5e1;'>{titulo}</p>
+                <h2 style='margin:0; color:#ffffff;'>{qtd}</h2>
+                <p style='margin:0; font-size:14px; color:{cor_valor}; font-weight:bold;'>R$ {valor:,.2f}</p>
             </div>
             """.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
+
+        card_metrica(col1, "Pendentes", len(df_pendentes), df_pendentes['Valor'].sum(), "#fbbf24")
+        card_metrica(col2, "Aprovados", len(df_aprovados), df_aprovados['Valor'].sum(), "#10b981")
+        card_metrica(col3, "Reprovados", len(df_reprovados), df_reprovados['Valor'].sum(), "#ef4444")
+        card_metrica(col4, "Total Geral", len(df_exibicao), df_exibicao['Valor'].sum(), "#38bdf8")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("### ⏳ Avaliação em Lote (Lançamentos Pendentes)")
         
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("### ⏳ Avaliação em Lote (Lançamentos Pendentes)")
