@@ -257,14 +257,20 @@ if perfil == "loja":
                                         "Nome": nome_del,
                                         "Valor": float(valor_del)
                                     }
+                                    
+                                    sucesso_del = False
                                     try:
                                         requests.post(URL_API_DESPESAS, json=payload_del, timeout=10)
-                                        st.success("Registro excluído!")
-                                        st.cache_data.clear()
-                                        time.sleep(1)
-                                        st.rerun()
-                                    except:
-                                        st.error("Erro ao tentar excluir.")
+                                        sucesso_del = True
+                                    except Exception as e:
+                                        st.error(f"Erro de conexão ao tentar excluir: {e}")
+                                
+                                # Limpeza e recarregamento FORA do try/except
+                                if sucesso_del:
+                                    st.success("Registro excluído com sucesso!")
+                                    st.cache_data.clear()
+                                    time.sleep(1)
+                                    st.rerun()
                             else:
                                 st.warning("Por favor, selecione um registro na lista.")
             else:
