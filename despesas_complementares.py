@@ -286,10 +286,16 @@ elif perfil in ["admin", "supervisor"]:
             
         df_pendentes = df_exibicao[df_exibicao['Autorização Supervisor'] == 'Pendente'].copy()
         df_historico = df_exibicao[df_exibicao['Autorização Supervisor'] != 'Pendente'].copy()
+        df_aprovados = df_exibicao[df_exibicao['Autorização Supervisor'] == 'Aprovado'].copy()
+        df_reprovados = df_exibicao[df_exibicao['Autorização Supervisor'] == 'Reprovado'].copy()
             
-        col_m1, col_m2 = st.columns(2)
-        total_pendente_valor = df_pendentes['Valor'].sum()
-        total_pendente_qtd = len(df_pendentes)
+       # Estrutura com 4 colunas para o resumo
+        col1, col2, col3, col4 = st.columns(4)
+        
+        col1.metric("Pendentes", len(df_pendentes), f"R$ {df_pendentes['Valor'].sum():,.2f}")
+        col2.metric("Aprovados", len(df_aprovados), f"R$ {df_aprovados['Valor'].sum():,.2f}")
+        col3.metric("Reprovados", len(df_reprovados), f"R$ {df_reprovados['Valor'].sum():,.2f}")
+        col4.metric("Total Geral", len(df_exibicao), f"R$ {df_exibicao['Valor'].sum():,.2f}")
         
         with col_m1:
             st.markdown(f"""
