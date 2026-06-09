@@ -91,7 +91,7 @@ if not st.session_state["logado_despesas"]:
             lista_usuarios = ["Selecione o usuário..."] + list(USUARIOS_DB.keys())
             user_input = st.selectbox("Usuário de acesso:", lista_usuarios)
             
-            # Autocomplete="new-password" bloqueia a sugestão automática do navegador
+            # Autocomplete="current-password" bloqueia a sugestão automática do navegador
             pass_input = st.text_input("Senha de acesso:", type="password", placeholder="••••••••", autocomplete="current-password")
             
             st.markdown("<br>", unsafe_allow_html=True)
@@ -170,7 +170,8 @@ if perfil == "loja":
             depto = st.selectbox("Departamento *", OPCOES_DEPTO)
         with col2:
             data_trab = st.date_input("Data Trabalhada *", format="DD/MM/YYYY")
-            valor = st.number_input("Valor (R$) *", min_value=0.0, step=10.0, format="%.2f")
+            # --- CORREÇÃO AQUI: value=None inserido para o campo iniciar vazio ---
+            valor = st.number_input("Valor (R$) *", min_value=0.0, step=10.0, format="%.2f", value=None)
             obs = st.text_area("Observações", placeholder="Justificativa ou transferência...")
             
         st.markdown("<br>", unsafe_allow_html=True)
@@ -179,8 +180,9 @@ if perfil == "loja":
         if submit:
             if not nome.strip():
                 st.error("⚠️ O campo Nome é obrigatório.")
-            elif valor <= 0:
-                st.error("⚠️ O campo Valor deve ser maior que zero.")
+            # --- CORREÇÃO AQUI: Trava de validação para quando o valor estiver vazio ou zero ---
+            elif valor is None or valor <= 0:
+                st.error("⚠️ O campo Valor deve ser preenchido com um valor maior que zero.")
             else:
                 with st.spinner("⏳ Enviando dados para o Google Sheets..."):
                     payload = {
