@@ -16,13 +16,17 @@ URL_API_DESPESAS = "https://script.google.com/macros/s/AKfycbwbOdR--mh46XzwbUId8
 
 # Banco de Usuários (Você pode ajustar conforme as lojas reais)
 USUARIOS_DB = {
-    "admin@molicenter.com.br": {"senha": "123", "perfil": "admin", "loja_fixa": None},
-    "supervisor@molicenter.com.br": {"senha": "123", "perfil": "supervisor", "loja_fixa": None},
-    "loja01@molicenter.com.br": {"senha": "123", "perfil": "loja", "loja_fixa": 1},
-    "loja02@molicenter.com.br": {"senha": "123", "perfil": "loja", "loja_fixa": 2},
-    "loja03@molicenter.com.br": {"senha": "123", "perfil": "loja", "loja_fixa": 3},
-    "loja04@molicenter.com.br": {"senha": "123", "perfil": "loja", "loja_fixa": 4},
-    "loja08@molicenter.com.br": {"senha": "123", "perfil": "loja", "loja_fixa": 8},
+    "admin@molicenter.com.br": {"senha": "moli0000", "perfil": "admin", "loja_fixa": None},
+    "supervisor@molicenter.com.br": {"senha": "moli0000", "perfil": "supervisor", "loja_fixa": None},
+    "loja01@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 1},
+    "loja02@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 2},
+    "loja03@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 3},
+    "loja04@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 4},
+    "loja05@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 5},
+    "loja06@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 6},
+    "loja07@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 7},
+    "loja08@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 8},
+    "loja30@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 30},
 }
 
 # Opções atualizadas conforme as imagens enviadas
