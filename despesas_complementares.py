@@ -424,7 +424,7 @@ elif perfil in ["admin", "supervisor"]:
         # TABELA CONSOLIDADA (substitui o expander de histórico)
         # =========================================================
         st.markdown("<br><hr>", unsafe_allow_html=True)
-        st.markdown("### 📚 Histórico Geral de Avaliações")
+        st.markdown("### 📚 Despesas Complementares dessa semana")
 
         if df_historico.empty:
             st.info("Nenhuma despesa foi avaliada ainda.")
