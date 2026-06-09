@@ -23,46 +23,46 @@ st.markdown("""
     
     /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA --- */
     @media print {
-        /* 1. Força o modo retrato e ajusta as margens da folha */
+        /* 1. Força o modo PAISAGEM e define margens limpas */
         @page {
-            size: portrait;
+            size: landscape;
             margin: 1cm;
         }
         
-        /* 2. Reduz o tamanho de tudo para caber na largura do Retrato perfeitamente */
+        /* 2. Ajusta o zoom para um tamanho confortável e nítido na folha deitada */
         body {
-            zoom: 0.60; 
+            zoom: 0.85; 
         }
 
-        /* 3. Esconde botões e barras do sistema */
+        /* 3. Esconde botões, barras de ferramentas e frames estruturais do Streamlit */
         header, footer, [data-testid="stToolbar"], [data-testid="stManageApp"], button, iframe { 
             display: none !important; 
         }
         
-        /* 4. Fundo da folha totalmente branco */
+        /* 4. Força o fundo branco absoluto na página */
         html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], main, .stApp {
             background-color: #FFFFFF !important;
             background: #FFFFFF !important;
         }
         
-        /* 5. Textos padrão em preto */
+        /* 5. Garante que os textos e rótulos fiquem em preto puro */
         p, h1, h2, h3, h4, h5, h6, span, label { 
             color: #000000 !important; 
         }
         
-        /* 6. Inverte a cor das tabelas (fundo branco, letra preta) */
+        /* 6. Inverte a cor das tabelas (fundo escuro vira branco, letra vira preta) */
         [data-testid="stDataFrame"] {
             filter: invert(1) hue-rotate(180deg) contrast(1.2) !important;
         }
         
-        /* 7. A MÁGICA DOS CARDS: Remove o fundo escuro, deixa branco com borda preta */
+        /* 7. Estiliza os cards de indicadores para o papel (fundo branco e borda preta) */
         .print-card {
             background-color: #FFFFFF !important; 
             border: 1.5px solid #000000 !important;
             box-shadow: none !important;
         }
         
-        /* 8. Garante que os números e títulos dentro dos cards fiquem pretos no papel */
+        /* 8. Garante contraste total dos textos internos dos cards */
         .print-card p, .print-card h2 {
             color: #000000 !important;
         }
