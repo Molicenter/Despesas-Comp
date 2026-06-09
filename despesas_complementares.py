@@ -28,87 +28,111 @@ st.markdown("""
 
     /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA --- */
     @media print {
-        /* 1. Define PAISAGEM e margens limpas */
+        /* Define PAISAGEM e margens */
         @page {
             size: landscape;
-            margin: 1cm;
+            margin: 10mm;
         }
         
-        body { zoom: 0.85; }
+        /* AVISO: ZOOM REMOVIDO! O zoom causava o bug do "buraco gigante" no Chrome */
 
-        /* 2. Esconde menus, botões e barras de ferramentas */
+        /* Esconde menus e botões */
         header, footer, [data-testid="stToolbar"], [data-testid="stManageApp"], button, iframe { 
             display: none !important; 
         }
         
-        /* 3. A REGRA DEMOLIDORA: Força TODAS as caixas estruturais do Streamlit a 
-           virarem blocos simples, destravando a altura e parando as sobreposições */
+        /* Destrava a altura e remove fundos de todas as caixas estruturais principais */
         html, body, .stApp, main, 
         [data-testid="stAppViewContainer"], 
         [data-testid="stHeader"], 
-        [data-testid="block-container"], 
+        [data-testid="block-container"] {
+            display: block !important;
+            width: 100% !important;
+            height: auto !important;
+            min-height: 0 !important;
+            max-height: none !important;
+            overflow: visible !important;
+            background-color: #FFFFFF !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        /* CORREÇÃO DOS BURACOS: Achata todos os blocos verticais do Streamlit */
         [data-testid="stVerticalBlock"], 
         [data-testid="stVerticalBlockBorderWrapper"], 
         .element-container {
             display: block !important;
             width: 100% !important;
             height: auto !important;
-            max-height: none !important;
             min-height: 0 !important;
             overflow: visible !important;
-            position: relative !important;
-            background-color: #FFFFFF !important;
+            gap: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        
+        /* Mantém elementos como os cards lado a lado de forma segura */
+        [data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            page-break-inside: avoid !important;
+            margin-bottom: 10px !important;
         }
 
-        /* 4. Libera especificamente o contêiner da tabela para crescer */
+        /* Força fontes limpas e cor preta para tudo */
+        *, p, h1, h2, h3, h4, h5, h6, span, label, th, td { 
+            color: #000000 !important; 
+            font-family: Arial, sans-serif !important;
+        }
+        
+        /* Cards brancos com borda preta */
+        .print-card {
+            background-color: #FFFFFF !important; 
+            border: 1px solid #000000 !important;
+            box-shadow: none !important;
+        }
+
+        /* Ajusta o título para nunca se separar da tabela */
+        h3 {
+            page-break-after: avoid !important;
+            margin-top: 15px !important;
+            margin-bottom: 5px !important;
+            padding: 0 !important;
+        }
+
+        hr {
+            margin: 10px 0 !important;
+            border-top: 1px solid #ccc !important;
+        }
+
+        /* MÁGICA DA TABELA SEM BURACOS: Libera a tabela e diminui a fonte diretamente (sem zoom) */
         [data-testid="stTable"], [data-testid="stTable"] > div {
             display: block !important;
             height: auto !important;
-            max-height: none !important;
             overflow: visible !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
 
-        /* 5. Mantém as colunas (cards e assinaturas) lado a lado, mas impede que quebrem no meio */
-        [data-testid="stHorizontalBlock"] {
-            display: flex !important;
-            flex-wrap: wrap !important;
-            page-break-inside: avoid !important;
-            height: auto !important;
-            overflow: visible !important;
-        }
-
-        /* 6. Cores de texto pretas */
-        p, h1, h2, h3, h4, h5, h6, span, label, th, td { color: #000000 !important; }
-        
-        /* 7. Estiliza os cards para impressão (branco com borda preta) */
-        .print-card {
-            background-color: #FFFFFF !important; 
-            border: 1.5px solid #000000 !important;
-            box-shadow: none !important;
-        }
-        .print-card p, .print-card h2 { color: #000000 !important; }
-
-        /* 8. Gruda o título na tabela */
-        h3 {
-            page-break-after: avoid !important;
-            margin-bottom: 5px !important;
-            padding-bottom: 0px !important;
-        }
-
-        /* 9. MÁGICA DA QUEBRA DE PÁGINA NAS TABELAS */
         table { 
             page-break-inside: auto !important; 
             border-collapse: collapse !important; 
             width: 100% !important; 
+            margin-bottom: 20px !important;
         }
+        
         tr { 
             page-break-inside: avoid !important; 
             page-break-after: auto !important; 
         }
+        
         th, td { 
-            border-bottom: 1px solid #ddd !important; 
-            padding: 6px !important; 
+            border-bottom: 1px solid #999 !important; 
+            padding: 4px 6px !important; /* Células mais estreitas */
+            font-size: 11px !important;  /* Fonte menor reduz a tabela de forma nativa e sem bugs */
         }
+        
         thead { display: table-header-group !important; }
         tfoot { display: table-footer-group !important; }
 
@@ -424,8 +448,8 @@ elif perfil in ["admin", "supervisor"]:
         card_metrica(col4, "Total Geral", len(df_exibicao), df_exibicao['Valor'].sum(), "#38bdf8")
 
         # --- AVALIAÇÃO EM LOTE ---
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("### ⏳ Avaliação em Lote (Lançamentos Pendentes)")
+        st.markdown("<hr style='margin: 15px 0;'>", unsafe_allow_html=True)
+        st.markdown("<h3 style='margin-top:0;'>⏳ Avaliação em Lote (Lançamentos Pendentes)</h3>", unsafe_allow_html=True)
                 
         if df_pendentes.empty:
             st.info("✨ Maravilha! Não há despesas pendentes de aprovação no momento.")
@@ -497,8 +521,8 @@ elif perfil in ["admin", "supervisor"]:
         # =========================================================
         # TABELA CONSOLIDADA E HISTÓRICO
         # =========================================================
-        st.markdown("<br><hr>", unsafe_allow_html=True)
-        st.markdown("<h3 style='margin-bottom: 0px;'>📚 Despesas Complementares dessa semana</h3>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin: 15px 0;'>", unsafe_allow_html=True)
+        st.markdown("<h3>📚 Despesas Complementares dessa semana</h3>", unsafe_allow_html=True)
 
         if df_historico.empty:
             st.info("Nenhuma despesa foi avaliada ainda.")
@@ -542,7 +566,6 @@ elif perfil in ["admin", "supervisor"]:
         # =========================================================
         # BLOCO DE ASSINATURAS NO RODAPÉ E RESUMO POR LOJA
         # =========================================================
-        st.markdown("<br><br>", unsafe_allow_html=True)
         
         col_sig1, col_space, col_sig2 = st.columns([0.7, 2.5, 0.7])
         
@@ -551,7 +574,7 @@ elif perfil in ["admin", "supervisor"]:
             if os.path.exists("Luciana.png"):
                 st.image("Luciana.png", use_container_width=True)
             else:
-                st.markdown("<br><br>", unsafe_allow_html=True)
+                st.markdown("<br>", unsafe_allow_html=True)
 
         # --- MEIO: RESUMO POR LOJA ---
         with col_space:
@@ -582,13 +605,13 @@ elif perfil in ["admin", "supervisor"]:
             if os.path.exists("Adriano.png"):
                 st.image("Adriano.png", use_container_width=True)
             else:
-                st.markdown("<br><br>", unsafe_allow_html=True)
+                st.markdown("<br>", unsafe_allow_html=True)
 
 
         # =========================================================
         # BOTÕES DE EXPORTAR, IMPRIMIR E LIMPAR
         # =========================================================
-        st.markdown("<br><hr>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin: 15px 0;'>", unsafe_allow_html=True)
         
         col_export, col_print, col_clear = st.columns([1, 1, 1])
 
