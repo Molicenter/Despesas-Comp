@@ -9,6 +9,10 @@ import io
 # =========================================================
 # 1. CONFIGURAÇÕES INICIAIS
 # =========================================================
+
+pasta_atual = os.path.dirname(__file__)
+caminho_imagem = os.path.join(pasta_atual, "passaro_logo.png")
+
 st.set_page_config(
     page_title="Despesas Complementares - Molicenter", 
     layout="wide",
@@ -106,9 +110,11 @@ if not st.session_state["logado_despesas"]:
                     </div>
                 """, unsafe_allow_html=True)
             
-            with col_logo:
-               # O comando fica aqui dentro desta coluna
-                st.image("passaro_logo.png", width=60)
+           with col_logo:
+    if os.path.exists(caminho_imagem):
+        st.image(caminho_imagem, width=60)
+    else:
+        st.warning("Arquivo não encontrado!") # Isso vai te
             
             st.divider()
                 # DICA: Se preferir usar o st.image, mantenha como estava, 
