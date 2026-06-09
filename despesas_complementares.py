@@ -23,35 +23,50 @@ st.markdown("""
     
     /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA --- */
     @media print {
-        /* 1. Esconde cabeçalho, rodapé e botões (incluindo o botão de imprimir que é um iframe) */
+        /* 1. Força o modo retrato e ajusta as margens da folha */
+        @page {
+            size: portrait;
+            margin: 1cm;
+        }
+        
+        /* 2. Reduz o tamanho de tudo para caber na largura do Retrato perfeitamente */
+        body {
+            zoom: 0.80; 
+        }
+
+        /* 3. Esconde botões e barras do sistema */
         header, footer, [data-testid="stToolbar"], [data-testid="stManageApp"], button, iframe { 
             display: none !important; 
         }
         
-        /* 2. Força fundo BRANCO absoluto na página */
+        /* 4. Fundo da folha totalmente branco */
         html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], main, .stApp {
             background-color: #FFFFFF !important;
             background: #FFFFFF !important;
         }
         
-        /* 3. Força as letras a ficarem PRETAS (títulos, textos, nomes) */
-        p, h1, h2, h3, h4, h5, h6, span { 
+        /* 5. Textos padrão em preto */
+        p, h1, h2, h3, h4, h5, h6, span, label { 
             color: #000000 !important; 
         }
         
-        /* 4. A MÁGICA DA TABELA: Inverte as cores como um negativo de foto. 
-           Fundo escuro vira branco, letra branca vira preta, e as cores verde/vermelho são mantidas. */
+        /* 6. Inverte a cor das tabelas (fundo branco, letra preta) */
         [data-testid="stDataFrame"] {
-            filter: invert(1) hue-rotate(180deg) contrast(1.1) !important;
+            filter: invert(1) hue-rotate(180deg) contrast(1.2) !important;
         }
         
-        /* 5. Clareia os 4 cards de indicadores lá de cima e coloca borda preta */
-        div[style*="background-color:#1e293b"] {
+        /* 7. A MÁGICA DOS CARDS: Remove o fundo escuro, deixa branco com borda preta */
+        .print-card {
             background-color: #FFFFFF !important; 
-            border: 1px solid #000000 !important;
+            border: 1.5px solid #000000 !important;
+            box-shadow: none !important;
         }
         
-        /* 6. Força a impressora a respeitar os fundos e cores */
+        /* 8. Garante que os números e títulos dentro dos cards fiquem pretos no papel */
+        .print-card p, .print-card h2 {
+            color: #000000 !important;
+        }
+
         * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
@@ -351,7 +366,7 @@ elif perfil in ["admin", "supervisor"]:
         
         def card_metrica(coluna, titulo, qtd, valor, cor_valor):
             coluna.markdown(f"""
-            <div style='background-color:#1e293b; padding:15px; border-radius:8px; border:1px solid #334155; text-align:center;'>
+            <div class='print-card' style='background-color:#1e293b; padding:15px; border-radius:8px; border:1px solid #334155; text-align:center;'>
                 <p style='margin:0; font-size:12px; color:#cbd5e1;'>{titulo}</p>
                 <h2 style='margin:0; color:#ffffff;'>{qtd}</h2>
                 <p style='margin:0; font-size:14px; color:{cor_valor}; font-weight:bold;'>R$ {valor:,.2f}</p>
