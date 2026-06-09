@@ -5,6 +5,7 @@ import json
 from datetime import datetime
 import time
 import io
+import os
 
 # =========================================================
 # 1. CONFIGURAÇÕES INICIAIS
@@ -95,11 +96,16 @@ if not st.session_state["logado_despesas"]:
     
     with col_centro:
         with st.container(border=True):
-            # Adicione aqui o arquivo do seu logo passarinho, se disponível na pasta
-             #st.image("passaro_logo.png", width=60) 
+            col_titulo, col_logo = st.columns([3, 1])
             
-            st.markdown("<h1 style='margin:0;'>Despesas Complementares</h1>", unsafe_allow_html=True)
-            st.markdown("<p style='color:#64748b;'>Molicenter -- Lançamentos ate o domingo e aprovação das segundas</p>", unsafe_allow_html=True)
+            with col_titulo:
+                st.markdown("<h1 style='margin:0; font-size: 24px;'>Despesas Complementares</h1>", unsafe_allow_html=True)
+                st.markdown("<p style='color:#64748b; margin:0;'>Molicenter</p>", unsafe_allow_html=True)
+            
+            with col_logo:
+                if os.path.exists("passaro_logo.png"):
+                    st.image("passaro_logo.png", width=60)
+            
             st.divider()
             
             lista_usuarios = ["Selecione..."] + list(USUARIOS_DB.keys())
@@ -304,7 +310,7 @@ elif perfil in ["admin", "supervisor"]:
         df_aprovados = df_exibicao[df_exibicao['Autorização Supervisor'] == 'Aprovado'].copy()
         df_reprovados = df_exibicao[df_exibicao['Autorização Supervisor'] == 'Reprovado'].copy()
             
-       # Estrutura com 4 colunas para o resumo
+        # Estrutura com 4 colunas para o resumo
         col1, col2, col3, col4 = st.columns(4)
         
         # Função para criar os cards estilizados
@@ -321,10 +327,36 @@ elif perfil in ["admin", "supervisor"]:
         card_metrica(col2, "Aprovados", len(df_aprovados), df_aprovados['Valor'].sum(), "#10b981")
         card_metrica(col3, "Reprovados", len(df_reprovados), df_reprovados['Valor'].sum(), "#ef4444")
         card_metrica(col4, "Total Geral", len(df_exibicao), df_exibicao['Valor'].sum(), "#38bdf8")
-        
+
+        # --- RESUMO POR LOJA (APROVADOS) ---
         st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("### 🏪 Resumo de Aprovados por Loja")
+        
+        if not df_aprovados.empty:
+            resumo_lojas = df_aprovados.groupby('Loja').agg(
+                Qtde=('Valor', 'count'),
+                Total_RS=('Valor', 'sum')
+            ).reset_index()
+            
+            resumo_lojas['Total_RS'] = resumo_lojas['Total_RS'].apply(lambda x: f"R$ {x:,.2f}")
+            resumo_lojas.rename(columns={'Loja': 'Loja', 'Qtde': 'Qtde', 'Total_RS': 'R$'}, inplace=True)
+            
+            st.dataframe(
+                resumo_lojas, 
+                use_container_width=False, 
+                hide_index=True,
+                column_config={
+                    "Loja": st.column_config.NumberColumn("Loja", width="small"),
+                    "Qtde": st.column_config.NumberColumn("Qtde", width="small"),
+                    "R$": st.column_config.TextColumn("R$", width="medium")
+                }
+            )
+        else:
+            st.info("Nenhuma despesa aprovada até o momento.")
+
+        # --- AVALIAÇÃO EM LOTE ---
+        st.markdown("<br><hr>", unsafe_allow_html=True)
         st.markdown("### ⏳ Avaliação em Lote (Lançamentos Pendentes)")
-       
                
         if df_pendentes.empty:
             st.info("✨ Maravilha! Não há despesas pendentes de aprovação no momento.")
@@ -393,35 +425,8 @@ elif perfil in ["admin", "supervisor"]:
                             time.sleep(1.5)
                             st.rerun()
 
-      # --- NOVO BLOCO: RESUMO POR LOJA (APROVADOS) ---
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("### 🏪 Resumo de Aprovados por Loja")
-        
-        if not df_aprovados.empty:
-            resumo_lojas = df_aprovados.groupby('Loja').agg(
-                Qtde=('Valor', 'count'),
-                Total_RS=('Valor', 'sum')
-            ).reset_index()
-            
-            resumo_lojas['Total_RS'] = resumo_lojas['Total_RS'].apply(lambda x: f"R$ {x:,.2f}")
-            resumo_lojas.rename(columns={'Loja': 'Loja', 'Qtde': 'Qtde', 'Total_RS': 'R$'}, inplace=True)
-            
-            # Ajuste: usamos o st.dataframe com config para limitar a largura
-            st.dataframe(
-                resumo_lojas, 
-                use_container_width=False, # Não ocupa a tela toda
-                hide_index=True,
-                column_config={
-                    "Loja": st.column_config.NumberColumn("Loja", width="small"),
-                    "Qtde": st.column_config.NumberColumn("Qtde", width="small"),
-                    "R$": st.column_config.TextColumn("R$", width="medium")
-                }
-            )
-        else:
-            st.info("Nenhuma despesa aprovada até o momento.")
-
         # =========================================================
-        # TABELA CONSOLIDADA (substitui o expander de histórico)
+        # TABELA CONSOLIDADA E HISTÓRICO
         # =========================================================
         st.markdown("<br><hr>", unsafe_allow_html=True)
         st.markdown("### 📚 Despesas Complementares dessa semana")
@@ -453,7 +458,7 @@ elif perfil in ["admin", "supervisor"]:
 
             st.markdown("<br>", unsafe_allow_html=True)
 
-            # Linha de botões: Exportar Excel + Limpar Registros (apenas admin)
+            # Linha de botões: Exportar Excel + Limpar Registros
             if perfil == "admin":
                 col_export, col_clear = st.columns([0.5, 0.5])
             else:
@@ -475,8 +480,6 @@ elif perfil in ["admin", "supervisor"]:
 
             # --- Botão Limpar Registros (somente admin) ---
             if perfil == "admin":
-
-                # Modal de confirmação com st.dialog
                 @st.dialog("⚠️ Confirmar Limpeza de Registros")
                 def dialog_limpar():
                     st.warning(
@@ -511,3 +514,28 @@ elif perfil in ["admin", "supervisor"]:
                 with col_clear:
                     if st.button("🗑️ Limpar Registros (Nova Semana)", use_container_width=True):
                         dialog_limpar()
+
+        # =========================================================
+        # BLOCO DE ASSINATURAS NO RODAPÉ
+        # =========================================================
+        st.markdown("<br><br><br><br>", unsafe_allow_html=True)
+        
+        col_sig1, col_space, col_sig2 = st.columns([1, 1.5, 1])
+        
+        with col_sig1:
+            if os.path.exists("Luciana.png"):
+                st.image("Luciana.png", use_container_width=True)
+            else:
+                st.markdown("<br><br><br>", unsafe_allow_html=True)
+            
+            st.markdown("<hr style='margin:0px; border-top: 1px solid #94a3b8;'>", unsafe_allow_html=True)
+            st.markdown("<p style='text-align: center; margin-top: 5px; color:#cbd5e1; font-size:14px;'><b>LUCIANA GRESPAN</b><br>Encarregada DP</p>", unsafe_allow_html=True)
+
+        with col_sig2:
+            if os.path.exists("Adriano.png"):
+                st.image("Adriano.png", use_container_width=True)
+            else:
+                st.markdown("<br><br><br>", unsafe_allow_html=True)
+            
+            st.markdown("<hr style='margin:0px; border-top: 1px solid #94a3b8;'>", unsafe_allow_html=True)
+            st.markdown("<p style='text-align: center; margin-top: 5px; color:#cbd5e1; font-size:14px;'><b>Adriano Martins</b><br>Analista Comercial</p>", unsafe_allow_html=True)
