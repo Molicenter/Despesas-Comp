@@ -99,7 +99,7 @@ if not st.session_state["logado_despesas"]:
              #st.image("passaro_logo.png", width=60) 
             
             st.markdown("<h1 style='margin:0;'>Despesas Complementares</h1>", unsafe_allow_html=True)
-            st.markdown("<p style='color:#64748b;'>Molicenter</p>", unsafe_allow_html=True)
+            st.markdown("<p style='color:#64748b;'>Molicenter -- Lançamentos ate o domingo e aprovação das segundas</p>", unsafe_allow_html=True)
             st.divider()
             
             lista_usuarios = ["Selecione..."] + list(USUARIOS_DB.keys())
