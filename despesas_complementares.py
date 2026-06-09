@@ -91,7 +91,6 @@ if not st.session_state["logado_despesas"]:
             lista_usuarios = ["Selecione o usuário..."] + list(USUARIOS_DB.keys())
             user_input = st.selectbox("Usuário de acesso:", lista_usuarios)
             
-            # Autocomplete="current-password" bloqueia a sugestão automática do navegador
             pass_input = st.text_input("Senha de acesso:", type="password", placeholder="••••••••", autocomplete="current-password")
             
             st.markdown("<br>", unsafe_allow_html=True)
@@ -120,7 +119,6 @@ def carregar_dados():
         if res.status_code == 200:
             df = pd.DataFrame(res.json())
             
-            # Formata as colunas de data removendo o padrão complexo do banco
             if 'Data Trabalhada' in df.columns:
                 df['Data Trabalhada'] = pd.to_datetime(df['Data Trabalhada'], errors='coerce').dt.strftime('%d/%m/%Y')
                 df['Data Trabalhada'] = df['Data Trabalhada'].fillna("-")
@@ -139,7 +137,6 @@ df_base = carregar_dados()
 perfil = st.session_state["perfil"]
 loja_fixa = st.session_state["loja_fixa"]
 
-# CABEÇALHO SUPERIOR (Substitui o menu lateral)
 col_title, col_info, col_btn = st.columns([0.65, 0.25, 0.1])
 with col_title:
     st.markdown("<h2 style='margin:0; padding:0;'>💸 Despesas Complementares</h2>", unsafe_allow_html=True)
@@ -148,7 +145,7 @@ with col_info:
 with col_btn:
     st.markdown("<div style='margin-top: 5px;'>", unsafe_allow_html=True)
     if st.button("🚪 Sair", use_container_width=True):
-        st.session_state.clear() # Limpa completamente a memória do acesso
+        st.session_state.clear()
         st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -158,7 +155,6 @@ st.markdown("<hr style='margin-top: 5px; margin-bottom: 25px;'>", unsafe_allow_h
 # 4. INTERFACE PRINCIPAL
 # =========================================================
 
-# --- VISÃO DA LOJA (DIGITAÇÃO) ---
 if perfil == "loja":
     st.info(f"📍 Módulo de Lançamentos - **Loja {loja_fixa:02d}**")
     
@@ -210,79 +206,70 @@ if perfil == "loja":
 
     st.markdown("---")
     
-    # DIVISÃO DA TELA: TABELA À ESQUERDA E BOTÃO DE EXCLUIR À DIREITA
     col_tabela, col_delete = st.columns([0.7, 0.3])
     
     with col_tabela:
         st.markdown("### 📋 Seus Registros Recentes")
     
-    if not df_base.empty:
-        try:
-            # Filtra apenas a loja atual
-            df_loja = df_base[df_base['Loja'].astype(str) == str(loja_fixa)].copy()
+    # VALIDAÇÃO SEGURA SEM TRY...EXCEPT GIGANTE
+    if not df_base.empty and 'Loja' in df_base.columns:
+        df_loja = df_base[df_base['Loja'].astype(str) == str(loja_fixa)].copy()
+        
+        if not df_loja.empty:
+            df_loja = df_loja.iloc[::-1].reset_index(drop=True)
             
-            if not df_loja.empty:
-                # Inverte a tabela para os últimos aparecerem primeiro
-                df_loja = df_loja.iloc[::-1].reset_index(drop=True)
-                
-                with col_tabela:
-                    st.dataframe(df_loja, use_container_width=True, hide_index=True)
-                
-                with col_delete:
-                    with st.container(border=True):
-                        st.markdown("#### 🗑️ Cancelar Lançamento")
-                        st.markdown("<span style='font-size:13px; color:#cbd5e1;'>Lançou errado? Selecione abaixo e exclua.</span>", unsafe_allow_html=True)
-                        
-                        opcoes_delete = []
-                        # Cria uma lista de opções baseada nos registros da loja
-                        for idx, row in df_loja.iterrows():
-                            data_str = str(row.get("Data Trabalhada", ""))
-                            nome_str = str(row.get("Nome Completo", ""))
-                            valor_str = str(row.get("Valor", 0))
-                            opcoes_delete.append(f"{data_str} | {nome_str} | R$ {valor_str}")
-                        
-                        registro_selecionado = st.selectbox("Selecione o registro:", ["- Selecione -"] + opcoes_delete, label_visibility="collapsed")
-                        
-                        if st.button("Confirmar Exclusão", type="primary", use_container_width=True):
-                            if registro_selecionado != "- Selecione -":
-                                # Extrai os dados exatos que a loja selecionou
-                                partes = registro_selecionado.split(" | ")
-                                nome_del = partes[1].strip()
-                                valor_del = partes[2].replace("R$", "").strip()
+            with col_tabela:
+                st.dataframe(df_loja, use_container_width=True, hide_index=True)
+            
+            with col_delete:
+                with st.container(border=True):
+                    st.markdown("#### 🗑️ Cancelar Lançamento")
+                    st.markdown("<span style='font-size:13px; color:#cbd5e1;'>Lançou errado? Selecione abaixo e exclua.</span>", unsafe_allow_html=True)
+                    
+                    opcoes_delete = []
+                    for idx, row in df_loja.iterrows():
+                        data_str = str(row.get("Data Trabalhada", ""))
+                        nome_str = str(row.get("Nome Completo", ""))
+                        valor_str = str(row.get("Valor", 0))
+                        opcoes_delete.append(f"{data_str} | {nome_str} | R$ {valor_str}")
+                    
+                    registro_selecionado = st.selectbox("Selecione o registro:", ["- Selecione -"] + opcoes_delete, label_visibility="collapsed")
+                    
+                    if st.button("Confirmar Exclusão", type="primary", use_container_width=True):
+                        if registro_selecionado != "- Selecione -":
+                            partes = registro_selecionado.split(" | ")
+                            nome_del = partes[1].strip()
+                            valor_del = partes[2].replace("R$", "").strip()
+                            
+                            with st.spinner("Apagando..."):
+                                payload_del = {
+                                    "action": "delete",
+                                    "Loja": loja_fixa,
+                                    "Nome": nome_del,
+                                    "Valor": float(valor_del)
+                                }
                                 
-                                with st.spinner("Apagando..."):
-                                    payload_del = {
-                                        "action": "delete",
-                                        "Loja": loja_fixa,
-                                        "Nome": nome_del,
-                                        "Valor": float(valor_del)
-                                    }
-                                    
-                                    sucesso_del = False
-                                    try:
-                                        requests.post(URL_API_DESPESAS, json=payload_del, timeout=10)
-                                        sucesso_del = True
-                                    except Exception as e:
-                                        st.error(f"Erro de conexão ao tentar excluir: {e}")
-                                
-                                # Limpeza e recarregamento FORA do try/except
-                                if sucesso_del:
-                                    st.success("Registro excluído com sucesso!")
-                                    st.cache_data.clear()
-                                    time.sleep(1)
-                                    st.rerun()
-                            else:
-                                st.warning("Por favor, selecione um registro na lista.")
-            else:
-                with col_tabela:
-                    st.info("Nenhum registro encontrado para a sua loja até o momento.")
-        except:
-            st.dataframe(df_base, use_container_width=True, hide_index=True)
+                                sucesso_del = False
+                                try:
+                                    requests.post(URL_API_DESPESAS, json=payload_del, timeout=10)
+                                    sucesso_del = True
+                                except Exception as e:
+                                    st.error(f"Erro de conexão ao tentar excluir: {e}")
+                            
+                            if sucesso_del:
+                                st.success("Registro excluído com sucesso!")
+                                st.cache_data.clear()
+                                time.sleep(1)
+                                st.rerun()
+                        else:
+                            st.warning("Por favor, selecione um registro na lista.")
+        else:
+            with col_tabela:
+                st.info("Nenhum registro encontrado para a sua loja até o momento.")
     else:
         st.info("O banco de dados ainda está vazio.")
 
 
-# --- VISÃO GERENCIAL / SUPERVISOR ---
 elif perfil in ["admin", "supervisor"]:
     st.success("🌐 Visão Consolidada - Todas as Lojas")
     
@@ -291,7 +278,6 @@ elif perfil in ["admin", "supervisor"]:
     else:
         df_exibicao = df_base.copy()
         
-        # Garante que a coluna valor seja numérica para a soma
         if 'Valor' in df_exibicao.columns:
             df_exibicao['Valor'] = pd.to_numeric(df_exibicao['Valor'], errors='coerce').fillna(0)
             
@@ -318,6 +304,5 @@ elif perfil in ["admin", "supervisor"]:
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("### 📊 Detalhamento Geral")
         
-        # Inverte para ver os últimos lançamentos primeiro
         df_exibicao = df_exibicao.iloc[::-1].reset_index(drop=True)
         st.dataframe(df_exibicao, use_container_width=True, hide_index=True)
