@@ -12,7 +12,7 @@ import time
 st.set_page_config(page_title="Despesas Complementares - Molicenter", layout="wide")
 
 # COLE AQUI A URL GERADA NO GOOGLE APPS SCRIPT
-URL_API_DESPESAS = "COLE_SUA_URL_AQUI" 
+URL_API_DESPESAS = "https://script.google.com/macros/s/AKfycbwbOdR--mh46XzwbUId8P4OsxQ8-T8ItbE4JwErh10qwMLWWt1S1vYUIFkK1mnzkxArYw/exec" 
 
 # Banco de Usuários (Você pode ajustar conforme as lojas reais)
 USUARIOS_DB = {
