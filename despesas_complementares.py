@@ -14,6 +14,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Oculta completamente a seta de abrir o menu lateral do Streamlit
 st.markdown("""
     <style>
     [data-testid="collapsedControl"] {display: none;}
@@ -38,14 +39,34 @@ USUARIOS_DB = {
     "loja30@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 30},
 }
 
+# Opções de Seleção
 OPCOES_MOTIVO = [
-    "Ajuste Modular", "Despesas (Justificar)", "Em Efetivação", "Falta Funcionário (dia)", 
-    "Falta Qlp", "Folga Domingo", "Folga Feriado", "Folga Férias", "Limpeza", "Venda Sazonal"
+    "Ajuste Modular", 
+    "Despesas (Justificar)", 
+    "Em Efetivação", 
+    "Falta Funcionário (dia)", 
+    "Falta Qlp", 
+    "Folga Domingo", 
+    "Folga Feriado", 
+    "Folga Férias", 
+    "Limpeza", 
+    "Venda Sazonal"
 ]
 
 OPCOES_DEPTO = [
-    "Açougue", "Confeitaria", "Cozinha", "Depósito", "Empacotador", "Frente Caixa", 
-    "Frios", "Hortifruti", "Loja (reposição)", "Motorista", "Outros", "Padaria", "Segurança"
+    "Açougue", 
+    "Confeitaria", 
+    "Cozinha", 
+    "Depósito", 
+    "Empacotador", 
+    "Frente Caixa", 
+    "Frios", 
+    "Hortifruti", 
+    "Loja (reposição)", 
+    "Motorista", 
+    "Outros", 
+    "Padaria", 
+    "Segurança"
 ]
 
 if "logado_despesas" not in st.session_state:
@@ -96,12 +117,15 @@ def carregar_dados():
         res = requests.get(URL_API_DESPESAS, timeout=10)
         if res.status_code == 200:
             df = pd.DataFrame(res.json())
+            
             if 'Data Trabalhada' in df.columns:
                 df['Data Trabalhada'] = pd.to_datetime(df['Data Trabalhada'], errors='coerce').dt.strftime('%d/%m/%Y')
                 df['Data Trabalhada'] = df['Data Trabalhada'].fillna("-")
+                
             if 'Carimbo de Data/Hora' in df.columns:
                 df['Carimbo de Data/Hora'] = pd.to_datetime(df['Carimbo de Data/Hora'], errors='coerce').dt.strftime('%d/%m/%Y %H:%M')
                 df['Carimbo de Data/Hora'] = df['Carimbo de Data/Hora'].fillna("-")
+                
             return df
     except Exception as e:
         st.error("Erro ao conectar com a planilha do Google.")
@@ -112,6 +136,7 @@ df_base = carregar_dados()
 perfil = st.session_state["perfil"]
 loja_fixa = st.session_state["loja_fixa"]
 
+# CABEÇALHO SUPERIOR (Substitui o menu lateral)
 col_title, col_info, col_btn = st.columns([0.65, 0.25, 0.1])
 with col_title:
     st.markdown("<h2 style='margin:0; padding:0;'>💸 Despesas Complementares</h2>", unsafe_allow_html=True)
@@ -154,18 +179,26 @@ if perfil == "loja":
             elif valor is None or valor <= 0:
                 st.error("⚠️ O campo Valor deve ser preenchido com um valor maior que zero.")
             else:
-                with st.spinner("⏳ Enviando dados..."):
+                with st.spinner("⏳ Enviando dados para o Google Sheets..."):
                     payload = {
-                        "action": "insert", "Loja": loja_fixa, "Nome": nome.upper().strip(),
-                        "Motivo": motivo, "Observacoes": obs.strip() if obs else "-", "Departamento": depto,
-                        "DataTrabalhada": data_trab.strftime("%d/%m/%Y"), "Valor": valor, "Autorizacao": "Pendente"
+                        "action": "insert",
+                        "Loja": loja_fixa,
+                        "Nome": nome.upper().strip(),
+                        "Motivo": motivo,
+                        "Observacoes": obs.strip() if obs else "-",
+                        "Departamento": depto,
+                        "DataTrabalhada": data_trab.strftime("%d/%m/%Y"),
+                        "Valor": valor,
+                        "Autorizacao": "Pendente"
                     }
+                    
                     sucesso = False
                     try:
                         requests.post(URL_API_DESPESAS, json=payload, timeout=10)
                         sucesso = True
-                    except:
-                        st.error("Erro de conexão ao salvar os dados.")
+                    except Exception as e:
+                        st.error(f"Erro de conexão ao salvar os dados: {e}")
+                    
                 if sucesso:
                     st.success("✅ Despesa registrada com sucesso!")
                     st.cache_data.clear()
@@ -173,23 +206,29 @@ if perfil == "loja":
                     st.rerun()
 
     st.markdown("---")
+    
     col_tabela, col_delete = st.columns([0.7, 0.3])
+    
     with col_tabela:
         st.markdown("### 📋 Seus Registros Recentes")
     
     if not df_base.empty and 'Loja' in df_base.columns:
         df_loja = df_base[df_base['Loja'].astype(str) == str(loja_fixa)].copy()
+        
         if not df_loja.empty:
             df_loja = df_loja.iloc[::-1].reset_index(drop=True)
+            
             with col_tabela:
                 st.dataframe(df_loja, use_container_width=True, hide_index=True)
+            
             with col_delete:
                 with st.container(border=True):
                     st.markdown("#### 🗑️ Cancelar Lançamento")
                     st.markdown("<span style='font-size:13px; color:#cbd5e1;'>Lançou errado? Selecione abaixo e exclua.</span>", unsafe_allow_html=True)
+                    
                     opcoes_delete = []
                     for idx, row in df_loja.iterrows():
-                        if row.get("Autorização Supervisor") == "Pendente": # Só pode deletar o que tá pendente
+                        if row.get("Autorização Supervisor") == "Pendente":
                             data_str = str(row.get("Data Trabalhada", ""))
                             nome_str = str(row.get("Nome Completo", ""))
                             valor_str = str(row.get("Valor", 0))
@@ -199,32 +238,41 @@ if perfil == "loja":
                         st.info("Não há registros pendentes para exclusão.")
                     else:
                         registro_selecionado = st.selectbox("Selecione o registro:", ["- Selecione -"] + opcoes_delete, label_visibility="collapsed")
+                        
                         if st.button("Confirmar Exclusão", type="primary", use_container_width=True):
                             if registro_selecionado != "- Selecione -":
                                 partes = registro_selecionado.split(" | ")
-                                nome_del, valor_del = partes[1].strip(), partes[2].replace("R$", "").strip()
+                                nome_del = partes[1].strip()
+                                valor_del = partes[2].replace("R$", "").strip()
+                                
                                 with st.spinner("Apagando..."):
                                     payload_del = {
-                                        "action": "delete", "Loja": loja_fixa, "Nome": nome_del, "Valor": float(valor_del)
+                                        "action": "delete",
+                                        "Loja": loja_fixa,
+                                        "Nome": nome_del,
+                                        "Valor": float(valor_del)
                                     }
+                                    
                                     sucesso_del = False
                                     try:
                                         requests.post(URL_API_DESPESAS, json=payload_del, timeout=10)
                                         sucesso_del = True
-                                    except:
-                                        st.error("Erro de conexão ao tentar excluir.")
+                                    except Exception as e:
+                                        st.error(f"Erro de conexão ao tentar excluir: {e}")
+                                
                                 if sucesso_del:
-                                    st.success("Registro excluído!")
+                                    st.success("Registro excluído com sucesso!")
                                     st.cache_data.clear()
                                     time.sleep(1)
                                     st.rerun()
                             else:
-                                st.warning("Por favor, selecione um registro.")
+                                st.warning("Por favor, selecione um registro na lista.")
         else:
             with col_tabela:
                 st.info("Nenhum registro encontrado para a sua loja até o momento.")
     else:
         st.info("O banco de dados ainda está vazio.")
+
 
 # --- VISÃO GERENCIAL / SUPERVISOR ---
 elif perfil in ["admin", "supervisor"]:
@@ -234,12 +282,12 @@ elif perfil in ["admin", "supervisor"]:
         st.warning("Nenhum dado encontrado ou planilha vazia.")
     else:
         df_exibicao = df_base.copy()
+        
         if 'Valor' in df_exibicao.columns:
             df_exibicao['Valor'] = pd.to_numeric(df_exibicao['Valor'], errors='coerce').fillna(0)
             
-        # Separa os pendentes dos já avaliados
-        df_pendentes = df_exibicao[df_exibicao['Autorização Supervisor'] == 'Pendente']
-        df_historico = df_exibicao[df_exibicao['Autorização Supervisor'] != 'Pendente']
+        df_pendentes = df_exibicao[df_exibicao['Autorização Supervisor'] == 'Pendente'].copy()
+        df_historico = df_exibicao[df_exibicao['Autorização Supervisor'] != 'Pendente'].copy()
             
         col_m1, col_m2 = st.columns(2)
         total_pendente_valor = df_pendentes['Valor'].sum()
@@ -252,6 +300,7 @@ elif perfil in ["admin", "supervisor"]:
                 <h2 style='margin:0; color:#fbbf24;'>{total_pendente_qtd}</h2>
             </div>
             """, unsafe_allow_html=True)
+            
         with col_m2:
             st.markdown(f"""
             <div style='background-color:#1e293b; padding:15px; border-radius:8px; border:1px solid #334155; text-align:center;'>
@@ -261,50 +310,79 @@ elif perfil in ["admin", "supervisor"]:
             """.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
         
         st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("### ⏳ Fila de Lançamentos Pendentes")
+        st.markdown("### ⏳ Avaliação em Lote (Lançamentos Pendentes)")
         
-        def atualizar_status(row_data, novo_status):
-            with st.spinner(f"Marcando como {novo_status}..."):
-                payload = {
-                    "action": "update",
-                    "Loja": row_data['Loja'],
-                    "Nome": row_data['Nome Completo'],
-                    "DataTrabalhada": row_data['Data Trabalhada'],
-                    "Valor": float(row_data['Valor']),
-                    "NovoStatus": novo_status
-                }
-                sucesso_upd = False
-                try:
-                    requests.post(URL_API_DESPESAS, json=payload, timeout=10)
-                    sucesso_upd = True
-                except Exception as e:
-                    st.error("Erro de conexão ao salvar decisão.")
-                if sucesso_upd:
-                    st.cache_data.clear()
-                    time.sleep(1)
-                    st.rerun()
-
         if df_pendentes.empty:
             st.info("✨ Maravilha! Não há despesas pendentes de aprovação no momento.")
         else:
-            # Lista os pendentes um a um em formato de cards para facilitar a decisão
-            for idx, row in df_pendentes.iterrows():
-                with st.container(border=True):
-                    col_info, col_val, col_y, col_n = st.columns([0.5, 0.2, 0.15, 0.15], vertical_alignment="center")
-                    
-                    with col_info:
-                        st.markdown(f"**Loja {int(row['Loja']):02d}** | {row['Nome Completo']}<br><span style='font-size:13px; color:#94a3b8;'>{row['Motivo']} - {row['Departamento']} ({row['Data Trabalhada']})</span><br><span style='font-size:12px; color:#64748b;'>Obs: {row['Observações']}</span>", unsafe_allow_html=True)
-                    with col_val:
-                        st.markdown(f"<h3 style='margin:0; color:#e2e8f0;'>R$ {row['Valor']:.2f}</h3>", unsafe_allow_html=True)
-                    with col_y:
-                        if st.button("✔️ Aprovar", key=f"y_{idx}", type="primary", use_container_width=True):
-                            atualizar_status(row, "Aprovado")
-                    with col_n:
-                        if st.button("❌ Reprovar", key=f"n_{idx}", use_container_width=True):
-                            atualizar_status(row, "Reprovado")
+            st.markdown("<span style='font-size:14px; color:#cbd5e1;'>Dê <b>dois cliques</b> na coluna <b>Avaliação 📝</b> para alterar o status. Ao finalizar suas escolhas, clique no botão vermelho de salvar no final da página.</span>", unsafe_allow_html=True)
+            
+            # Insere a coluna interativa como a primeira da tabela
+            df_pendentes.insert(0, 'Avaliação 📝', 'Pendente')
+            
+            # Remove a coluna original de aprovação para não confundir
+            df_edicao = df_pendentes.drop(columns=['Autorização Supervisor'])
+            
+            # Tabela de Edição de Dados em Lote
+            edited_df = st.data_editor(
+                df_edicao,
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    "Avaliação 📝": st.column_config.SelectboxColumn(
+                        "Avaliação 📝",
+                        help="Clique duas vezes para aprovar ou reprovar",
+                        width="medium",
+                        options=["Pendente", "Aprovado", "Reprovado"],
+                        required=True,
+                    ),
+                    "Carimbo de Data/Hora": st.column_config.Column(disabled=True),
+                    "Loja": st.column_config.Column(disabled=True),
+                    "Nome Completo": st.column_config.Column(disabled=True),
+                    "Motivo": st.column_config.Column(disabled=True),
+                    "Observações": st.column_config.Column(disabled=True),
+                    "Departamento": st.column_config.Column(disabled=True),
+                    "Data Trabalhada": st.column_config.Column(disabled=True),
+                    "Valor": st.column_config.NumberColumn(format="R$ %.2f", disabled=True),
+                }
+            )
+            
+            st.markdown("<br>", unsafe_allow_html=True)
+            
+            # Botão mestre para processar todas as avaliações feitas na tabela
+            if st.button("💾 Salvar Alterações no Sistema", type="primary"):
+                mudancas = edited_df[edited_df['Avaliação 📝'] != 'Pendente']
+                
+                if mudancas.empty:
+                    st.warning("⚠️ Nenhuma avaliação foi alterada. Mude o status para 'Aprovado' ou 'Reprovado' na tabela antes de salvar.")
+                else:
+                    with st.spinner(f"⏳ Processando e salvando {len(mudancas)} avaliações..."):
+                        sucesso_geral = True
+                        for idx, row in mudancas.iterrows():
+                            payload = {
+                                "action": "update",
+                                "Loja": row['Loja'],
+                                "Nome": row['Nome Completo'],
+                                "DataTrabalhada": row['Data Trabalhada'],
+                                "Valor": float(row['Valor']),
+                                "NovoStatus": row['Avaliação 📝']
+                            }
+                            try:
+                                requests.post(URL_API_DESPESAS, json=payload, timeout=10)
+                            except:
+                                sucesso_geral = False
+                        
+                        if sucesso_geral:
+                            st.success("✅ Avaliações salvas com sucesso!")
+                        else:
+                            st.error("⚠️ Alguns registros podem não ter sido salvos devido a um erro de conexão.")
+                        
+                        st.cache_data.clear()
+                        time.sleep(1.5)
+                        st.rerun()
 
         st.markdown("<br><hr>", unsafe_allow_html=True)
-        with st.expander("📚 Ver Histórico de Avaliações", expanded=False):
+        with st.expander("📚 Ver Histórico Geral de Avaliações", expanded=False):
             if df_historico.empty:
                 st.info("Nenhuma despesa foi avaliada ainda.")
             else:
