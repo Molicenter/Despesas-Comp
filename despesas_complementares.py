@@ -39,10 +39,12 @@ st.markdown("""
             display: none !important; 
         }
         
-        /* 4. Força o fundo branco absoluto na página */
+        /* 4. Força o fundo branco absoluto na página e libera para imprimir múltiplas páginas */
         html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], main, .stApp {
             background-color: #FFFFFF !important;
             background: #FFFFFF !important;
+            height: auto !important;
+            overflow: visible !important;
         }
         
         /* 5. Garante que os textos e rótulos fiquem em preto puro */
@@ -473,20 +475,29 @@ elif perfil in ["admin", "supervisor"]:
             if 'Carimbo de Data/Hora' in df_tela.columns:
                 df_tela = df_tela.drop(columns=['Carimbo de Data/Hora'])
 
-            def highlight_status(val):
+           def highlight_status(val):
                 if val == 'Aprovado':
                     return 'color: #10b981; font-weight: bold;'
                 elif val == 'Reprovado':
                     return 'color: #ef4444; font-weight: bold;'
                 return ''
 
-            # Exibe o df_tela (sem o carimbo)
+            # Calcula a altura necessária para não ter barra de rolagem (35px por linha + 40px cabeçalho)
+            altura_tabela = (len(df_tela) * 35) + 40
+
+            # Exibe o df_tela com a altura dinâmica
             st.dataframe(
                 df_tela.style.map(highlight_status, subset=['Autorização Supervisor']),
                 use_container_width=True,
-                hide_index=True
+                hide_index=True,
+                height=altura_tabela,  # <--- AQUI ESTÁ A MÁGICA
+                column_config={
+                    "Loja": st.column_config.NumberColumn("Loja", width="small"),
+                    "Data Trabalhada": st.column_config.TextColumn("Data Trabalhada", width="small"),
+                    "Valor": st.column_config.TextColumn("Valor", width="small"),
+                    "Autorização Supervisor": st.column_config.TextColumn("Status", width="small")
+                }
             )
-
         # =========================================================
         # BLOCO DE ASSINATURAS NO RODAPÉ E RESUMO POR LOJA
         # =========================================================
