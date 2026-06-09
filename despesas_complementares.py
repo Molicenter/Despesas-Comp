@@ -95,14 +95,26 @@ if not st.session_state["logado_despesas"]:
     
     with col_centro:
         with st.container(border=True): # Descomente esta linha (tire o #)
+           # --- Cabeçalho Elegante ---
             col_titulo, col_logo = st.columns([3, 1])
             
-            with col_titulo: # ALINHE ISSO AQUI: deve ter apenas 1 nível de espaço em relação ao container
-                st.markdown("<h1 style='margin:0;'>Despesas Complementares</h1>", unsafe_allow_html=True)
-                st.markdown("<p style='color:#64748b;'>Molicenter</p>", unsafe_allow_html=True)
+            with col_titulo:
+                st.markdown("""
+                    <div style="padding-top: 5px;">
+                        <h1 style='margin:0; font-size: 24px;'>Despesas Complementares</h1>
+                        <p style='color:#64748b; margin:0;'>Molicenter</p>
+                    </div>
+                """, unsafe_allow_html=True)
             
-            with col_logo: # ALINHE ISSO TAMBÉM
-                st.image("passaro_logo.png", width=60)
+            with col_logo:
+                # O style="float: right;" garante que ele encoste na direita com elegância
+                st.markdown("""
+                    <div style="display: flex; justify-content: flex-end; align-items: center; height: 100%;">
+                        <img src="https://i.imgur.com/SEU_LINK_AQUI.png" width="60">
+                    </div>
+                """, unsafe_allow_html=True)
+                # DICA: Se preferir usar o st.image, mantenha como estava, 
+                # mas o CSS acima ajuda a posicionar melhor.
             
             st.divider()
             
