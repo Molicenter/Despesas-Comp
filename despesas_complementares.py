@@ -31,7 +31,7 @@ st.markdown("""
         
         /* 2. Reduz o tamanho de tudo para caber na largura do Retrato perfeitamente */
         body {
-            zoom: 0.65; 
+            zoom: 0.60; 
         }
 
         /* 3. Esconde botões e barras do sistema */
