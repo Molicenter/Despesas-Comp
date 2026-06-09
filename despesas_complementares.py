@@ -107,12 +107,10 @@ if not st.session_state["logado_despesas"]:
                 """, unsafe_allow_html=True)
             
             with col_logo:
-                # O style="float: right;" garante que ele encoste na direita com elegância
-                st.markdown("""
-                    <div style="display: flex; justify-content: flex-end; align-items: center; height: 100%;">
-                        <img src="https://i.imgur.com/SEU_LINK_AQUI.png" width="60">
-                    </div>
-                """, unsafe_allow_html=True)
+               # O comando fica aqui dentro desta coluna
+                st.image("passaro_logo.png", width=60)
+            
+            st.divider()
                 # DICA: Se preferir usar o st.image, mantenha como estava, 
                 # mas o CSS acima ajuda a posicionar melhor.
             
