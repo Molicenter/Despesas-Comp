@@ -3,7 +3,6 @@ import pandas as pd
 import requests
 import json
 from datetime import datetime
-import os
 import time
 
 # =========================================================
@@ -91,7 +90,9 @@ if not st.session_state["logado_despesas"]:
             
             lista_usuarios = ["Selecione o usuário..."] + list(USUARIOS_DB.keys())
             user_input = st.selectbox("Usuário de acesso:", lista_usuarios)
-            pass_input = st.text_input("Senha de acesso:", type="password", placeholder="••••••••")
+            
+            # Autocomplete="new-password" bloqueia a sugestão automática do navegador
+            pass_input = st.text_input("Senha de acesso:", type="password", placeholder="••••••••", autocomplete="new-password")
             
             st.markdown("<br>", unsafe_allow_html=True)
             if st.button("Entrar no Sistema", use_container_width=True, type="primary"):
@@ -117,7 +118,18 @@ def carregar_dados():
     try:
         res = requests.get(URL_API_DESPESAS, timeout=10)
         if res.status_code == 200:
-            return pd.DataFrame(res.json())
+            df = pd.DataFrame(res.json())
+            
+            # Formata as colunas de data removendo o padrão complexo do banco
+            if 'Data Trabalhada' in df.columns:
+                df['Data Trabalhada'] = pd.to_datetime(df['Data Trabalhada'], errors='coerce').dt.strftime('%d/%m/%Y')
+                df['Data Trabalhada'] = df['Data Trabalhada'].fillna("-")
+                
+            if 'Carimbo de Data/Hora' in df.columns:
+                df['Carimbo de Data/Hora'] = pd.to_datetime(df['Carimbo de Data/Hora'], errors='coerce').dt.strftime('%d/%m/%Y %H:%M')
+                df['Carimbo de Data/Hora'] = df['Carimbo de Data/Hora'].fillna("-")
+                
+            return df
     except Exception as e:
         st.error("Erro ao conectar com a planilha do Google.")
     return pd.DataFrame()
@@ -136,7 +148,7 @@ with col_info:
 with col_btn:
     st.markdown("<div style='margin-top: 5px;'>", unsafe_allow_html=True)
     if st.button("🚪 Sair", use_container_width=True):
-        st.session_state["logado_despesas"] = False
+        st.session_state.clear() # Limpa completamente a memória do acesso
         st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
