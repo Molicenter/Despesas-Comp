@@ -19,6 +19,25 @@ st.set_page_config(
 st.markdown("""
     <style>
     [data-testid="collapsedControl"] {display: none;}
+    
+    /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA --- */
+    @media print {
+        /* Esconde o cabeçalho, rodapé e botão "Manage App" do Streamlit */
+        header, footer, [data-testid="stToolbar"], [data-testid="stManageApp"] { 
+            display: none !important; 
+        }
+        
+        /* Força as letras a ficarem pretas no papel branco */
+        .stApp, p, h1, h2, h3, h4, h5, h6, span, div { 
+            color: black !important; 
+        }
+        
+        /* Obriga a impressora a imprimir os fundos coloridos (os 4 cards lá de cima) */
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+    }
     </style>
 """, unsafe_allow_html=True)
 
