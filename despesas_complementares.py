@@ -94,12 +94,14 @@ if not st.session_state["logado_despesas"]:
     _, col_centro, _ = st.columns([1, 1.5, 1])
     
     with col_centro:
-        with st.container(border=True):
-            # Adicione aqui o arquivo do seu logo passarinho, se disponível na pasta
-            st.image("passaro_logo.png", width=60) 
-            
+        col_titulo, col_logo = st.columns([3, 1])
+        #with st.container(border=True):
+                   with col_titulo:
             st.markdown("<h1 style='margin:0;'>Despesas Complementares</h1>", unsafe_allow_html=True)
             st.markdown("<p style='color:#64748b;'>Molicenter</p>", unsafe_allow_html=True)
+
+                   with col_logo:   
+            st.image("passaro_logo.png", width=60)                         
             st.divider()
             
             lista_usuarios = ["Selecione..."] + list(USUARIOS_DB.keys())
