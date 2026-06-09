@@ -23,17 +23,34 @@ st.markdown("""
     
     /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA --- */
     @media print {
-        /* Esconde o cabeçalho, rodapé e botões do Streamlit no papel */
-        header, footer, [data-testid="stToolbar"], [data-testid="stManageApp"] { 
+        /* 1. Esconde cabeçalho, rodapé e TODOS os botões no papel */
+        header, footer, [data-testid="stToolbar"], [data-testid="stManageApp"], button { 
             display: none !important; 
         }
         
-        /* Força as letras a ficarem pretas no papel branco */
-        .stApp, p, h1, h2, h3, h4, h5, h6, span, div, label { 
-            color: black !important; 
+        /* 2. Força fundo BRANCO absoluto na página e no Streamlit */
+        html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], main, .stApp {
+            background-color: #FFFFFF !important;
+            background: #FFFFFF !important;
         }
         
-        /* Obriga a impressora a imprimir os fundos coloridos (os cards) */
+        /* 3. Força as letras a ficarem PRETAS para dar contraste */
+        *, p, h1, h2, h3, h4, h5, h6, span, div, label, th, td { 
+            color: #000000 !important; 
+        }
+        
+        /* 4. Clareia os fundos escuros (os 4 cards de indicadores lá em cima) */
+        div[style*="background-color:#1e293b"] {
+            background-color: #F8FAFC !important; /* Fundo cinza bem claro */
+            border: 1px solid #000000 !important;
+        }
+        
+        /* 5. Garante que o fundo das tabelas fique branco */
+        [data-testid="stDataFrame"] div, [data-testid="stDataFrame"] table {
+            background-color: #FFFFFF !important;
+        }
+
+        /* 6. Força a impressora a respeitar essas novas cores claras */
         * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
