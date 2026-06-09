@@ -23,34 +23,35 @@ st.markdown("""
     
     /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA --- */
     @media print {
-        /* 1. Esconde cabeçalho, rodapé e TODOS os botões no papel */
-        header, footer, [data-testid="stToolbar"], [data-testid="stManageApp"], button { 
+        /* 1. Esconde cabeçalho, rodapé e botões (incluindo o botão de imprimir que é um iframe) */
+        header, footer, [data-testid="stToolbar"], [data-testid="stManageApp"], button, iframe { 
             display: none !important; 
         }
         
-        /* 2. Força fundo BRANCO absoluto na página e no Streamlit */
+        /* 2. Força fundo BRANCO absoluto na página */
         html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], main, .stApp {
             background-color: #FFFFFF !important;
             background: #FFFFFF !important;
         }
         
-        /* 3. Força as letras a ficarem PRETAS para dar contraste */
-        *, p, h1, h2, h3, h4, h5, h6, span, div, label, th, td { 
+        /* 3. Força as letras a ficarem PRETAS (títulos, textos, nomes) */
+        p, h1, h2, h3, h4, h5, h6, span { 
             color: #000000 !important; 
         }
         
-        /* 4. Clareia os fundos escuros (os 4 cards de indicadores lá em cima) */
+        /* 4. A MÁGICA DA TABELA: Inverte as cores como um negativo de foto. 
+           Fundo escuro vira branco, letra branca vira preta, e as cores verde/vermelho são mantidas. */
+        [data-testid="stDataFrame"] {
+            filter: invert(1) hue-rotate(180deg) contrast(1.1) !important;
+        }
+        
+        /* 5. Clareia os 4 cards de indicadores lá de cima e coloca borda preta */
         div[style*="background-color:#1e293b"] {
-            background-color: #F8FAFC !important; /* Fundo cinza bem claro */
+            background-color: #FFFFFF !important; 
             border: 1px solid #000000 !important;
         }
         
-        /* 5. Garante que o fundo das tabelas fique branco */
-        [data-testid="stDataFrame"] div, [data-testid="stDataFrame"] table {
-            background-color: #FFFFFF !important;
-        }
-
-        /* 6. Força a impressora a respeitar essas novas cores claras */
+        /* 6. Força a impressora a respeitar os fundos e cores */
         * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
