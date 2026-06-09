@@ -4,6 +4,7 @@ import requests
 import json
 from datetime import datetime
 import time
+import io # Necessário para a exportação do Excel
 
 # =========================================================
 # 1. CONFIGURAÇÕES INICIAIS
@@ -90,8 +91,6 @@ if not st.session_state["logado_despesas"]:
             
             lista_usuarios = ["Selecione o usuário..."] + list(USUARIOS_DB.keys())
             user_input = st.selectbox("Usuário de acesso:", lista_usuarios)
-            
-            # Autocomplete="current-password" bloqueia a sugestão automática do navegador
             pass_input = st.text_input("Senha de acesso:", type="password", placeholder="••••••••", autocomplete="current-password")
             
             st.markdown("<br>", unsafe_allow_html=True)
@@ -120,7 +119,6 @@ def carregar_dados():
         if res.status_code == 200:
             df = pd.DataFrame(res.json())
             
-            # Formata as colunas de data removendo o padrão complexo do banco
             if 'Data Trabalhada' in df.columns:
                 df['Data Trabalhada'] = pd.to_datetime(df['Data Trabalhada'], errors='coerce').dt.strftime('%d/%m/%Y')
                 df['Data Trabalhada'] = df['Data Trabalhada'].fillna("-")
@@ -139,7 +137,6 @@ df_base = carregar_dados()
 perfil = st.session_state["perfil"]
 loja_fixa = st.session_state["loja_fixa"]
 
-# CABEÇALHO SUPERIOR (Substitui o menu lateral)
 col_title, col_info, col_btn = st.columns([0.65, 0.25, 0.1])
 with col_title:
     st.markdown("<h2 style='margin:0; padding:0;'>💸 Despesas Complementares</h2>", unsafe_allow_html=True)
@@ -148,7 +145,7 @@ with col_info:
 with col_btn:
     st.markdown("<div style='margin-top: 5px;'>", unsafe_allow_html=True)
     if st.button("🚪 Sair", use_container_width=True):
-        st.session_state.clear() # Limpa completamente a memória do acesso
+        st.session_state.clear()
         st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -158,7 +155,6 @@ st.markdown("<hr style='margin-top: 5px; margin-bottom: 25px;'>", unsafe_allow_h
 # 4. INTERFACE PRINCIPAL
 # =========================================================
 
-# --- VISÃO DA LOJA (DIGITAÇÃO E EXCLUSÃO) ---
 if perfil == "loja":
     st.info(f"📍 Módulo de Lançamentos - **Loja {loja_fixa:02d}**")
     
@@ -210,7 +206,6 @@ if perfil == "loja":
 
     st.markdown("---")
     
-    # DIVISÃO DA TELA: TABELA À ESQUERDA E BOTÃO DE EXCLUIR À DIREITA
     col_tabela, col_delete = st.columns([0.7, 0.3])
     
     with col_tabela:
@@ -278,7 +273,6 @@ if perfil == "loja":
         st.info("O banco de dados ainda está vazio.")
 
 
-# --- VISÃO GERENCIAL / SUPERVISOR ---
 elif perfil in ["admin", "supervisor"]:
     st.success("🌐 Visão Consolidada - Painel de Aprovação")
     
@@ -321,13 +315,9 @@ elif perfil in ["admin", "supervisor"]:
         else:
             st.markdown("<span style='font-size:14px; color:#cbd5e1;'>Dê <b>dois cliques</b> na coluna <b>Avaliação 📝</b> para alterar o status. Ao finalizar suas escolhas, clique no botão vermelho de salvar no final da página.</span>", unsafe_allow_html=True)
             
-            # Insere a coluna interativa como a primeira da tabela
             df_pendentes.insert(0, 'Avaliação 📝', 'Pendente')
-            
-            # Remove a coluna original de aprovação para não confundir
             df_edicao = df_pendentes.drop(columns=['Autorização Supervisor'])
             
-            # Tabela de Edição de Dados em Lote
             edited_df = st.data_editor(
                 df_edicao,
                 use_container_width=True,
@@ -353,7 +343,6 @@ elif perfil in ["admin", "supervisor"]:
             
             st.markdown("<br>", unsafe_allow_html=True)
             
-            # Botão mestre para processar todas as avaliações feitas na tabela
             if st.button("💾 Salvar Alterações no Sistema", type="primary"):
                 mudancas = edited_df[edited_df['Avaliação 📝'] != 'Pendente']
                 
@@ -361,8 +350,6 @@ elif perfil in ["admin", "supervisor"]:
                     st.warning("⚠️ Nenhuma avaliação foi alterada. Mude o status para 'Aprovado' ou 'Reprovado' na tabela antes de salvar.")
                 else:
                     with st.spinner(f"⏳ Processando e salvando {len(mudancas)} avaliações de uma vez..."):
-                        
-                        # Cria uma lista/pacote com todas as alterações para enviar de uma vez só
                         lista_atualizacoes = []
                         for idx, row in mudancas.iterrows():
                             lista_atualizacoes.append({
@@ -379,13 +366,11 @@ elif perfil in ["admin", "supervisor"]:
                         
                         sucesso_geral = False
                         try:
-                            # Faz um único envio rápido
                             requests.post(URL_API_DESPESAS, json=payload, timeout=20)
                             sucesso_geral = True
                         except Exception as e:
                             st.error(f"Erro de conexão ao salvar: {e}")
                         
-                        # Limpa e recarrega após salvar
                         if sucesso_geral:
                             st.success("✅ Avaliações salvas com sucesso!")
                             st.cache_data.clear()
@@ -397,5 +382,46 @@ elif perfil in ["admin", "supervisor"]:
             if df_historico.empty:
                 st.info("Nenhuma despesa foi avaliada ainda.")
             else:
-                df_historico = df_historico.iloc[::-1].reset_index(drop=True)
-                st.dataframe(df_historico, use_container_width=True, hide_index=True)
+                # Ordena por Loja e depois pela Data de registro (mais recentes primeiro)
+                df_historico = df_historico.sort_values(by=['Loja', 'Carimbo de Data/Hora'], ascending=[True, False]).reset_index(drop=True)
+                
+                df_view = df_historico.copy()
+                
+                # Formata a coluna Valor para exibir com R$
+                df_view['Valor'] = df_view['Valor'].apply(lambda x: f"R$ {float(x):,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+                
+                # Função de cor para a coluna Autorização
+                def highlight_status(val):
+                    if val == 'Aprovado':
+                        return 'color: #10b981; font-weight: bold;'
+                    elif val == 'Reprovado':
+                        return 'color: #ef4444; font-weight: bold;'
+                    return ''
+                
+                st.dataframe(df_view.style.map(highlight_status, subset=['Autorização Supervisor']), use_container_width=True, hide_index=True)
+                
+                st.markdown("<br>", unsafe_allow_html=True)
+                
+                # Exportação para Excel
+                buffer = io.BytesIO()
+                try:
+                    with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+                        df_view.to_excel(writer, index=False, sheet_name='Histórico')
+                    
+                    st.download_button(
+                        label="📊 Exportar Histórico para Excel",
+                        data=buffer.getvalue(),
+                        file_name=f"historico_despesas_{datetime.now().strftime('%d%m%Y')}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        type="primary"
+                    )
+                except Exception as e:
+                    # Fallback de segurança para CSV caso falte pacote no servidor
+                    csv = df_view.to_csv(index=False, sep=';', encoding='utf-8-sig')
+                    st.download_button(
+                        label="📊 Exportar Histórico para CSV",
+                        data=csv,
+                        file_name=f"historico_despesas_{datetime.now().strftime('%d%m%Y')}.csv",
+                        mime="text/csv",
+                        type="primary"
+                    )
