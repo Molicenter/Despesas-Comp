@@ -21,6 +21,11 @@ st.markdown("""
     <style>
     [data-testid="collapsedControl"] {display: none;}
     
+    /* Ajuste para tabela HTML nativa ocupar 100% da largura na tela normal */
+    [data-testid="stTable"] table {
+        width: 100% !important;
+    }
+
     /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA --- */
     @media print {
         /* 1. Força o modo PAISAGEM e define margens limpas */
@@ -47,12 +52,12 @@ st.markdown("""
             overflow: visible !important;
         }
         
-        /* 5. Garante que os textos e rótulos fiquem em preto puro */
-        p, h1, h2, h3, h4, h5, h6, span, label { 
+        /* 5. Garante que os textos, rótulos e tabelas fiquem em preto puro */
+        p, h1, h2, h3, h4, h5, h6, span, label, th, td { 
             color: #000000 !important; 
         }
         
-        /* 6. Inverte a cor das tabelas (fundo escuro vira branco, letra vira preta) */
+        /* 6. Inverte a cor apenas das tabelas Canvas antigas (st.data_editor) */
         [data-testid="stDataFrame"] {
             filter: invert(1) hue-rotate(180deg) contrast(1.2) !important;
         }
@@ -68,6 +73,12 @@ st.markdown("""
         .print-card p, .print-card h2 {
             color: #000000 !important;
         }
+
+        /* 9. MÁGICA DA QUEBRA DE PÁGINA: Ensina o navegador a cortar a st.table entre folhas */
+        table { page-break-inside: auto !important; }
+        tr    { page-break-inside: avoid !important; page-break-after: auto !important; }
+        thead { display: table-header-group !important; }
+        tfoot { display: table-footer-group !important; }
 
         * {
             -webkit-print-color-adjust: exact !important;
@@ -470,11 +481,17 @@ elif perfil in ["admin", "supervisor"]:
                 lambda x: f"R$ {float(x):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
             )
 
-            # df_tela será usado apenas na visualização (removemos o carimbo para ganhar espaço)
+            # df_tela será usado apenas na visualização
             df_tela = df_view.copy()
+            
+            # Removemos a coluna do carimbo para dar mais espaço no papel
             if 'Carimbo de Data/Hora' in df_tela.columns:
                 df_tela = df_tela.drop(columns=['Carimbo de Data/Hora'])
 
+            # Encurtamos o nome da última coluna para otimizar espaço
+            df_tela.rename(columns={'Autorização Supervisor': 'Status'}, inplace=True)
+
+            # Função de colorir aprovados/reprovados
             def highlight_status(val):
                 if val == 'Aprovado':
                     return 'color: #10b981; font-weight: bold;'
@@ -482,22 +499,16 @@ elif perfil in ["admin", "supervisor"]:
                     return 'color: #ef4444; font-weight: bold;'
                 return ''
 
-            # Calcula a altura necessária para não ter barra de rolagem (35px por linha + 40px cabeçalho)
-            altura_tabela = (len(df_tela) * 35) + 40
-
-            # Exibe o df_tela com a altura dinâmica
-            st.dataframe(
-                df_tela.style.map(highlight_status, subset=['Autorização Supervisor']),
-                use_container_width=True,
-                hide_index=True,
-                height=altura_tabela,
-                column_config={
-                    "Loja": st.column_config.NumberColumn("Loja", width="small"),
-                    "Data Trabalhada": st.column_config.TextColumn("Data Trabalhada", width="small"),
-                    "Valor": st.column_config.TextColumn("Valor", width="small"),
-                    "Autorização Supervisor": st.column_config.TextColumn("Status", width="small")
-                }
-            )
+            # A GRANDE MUDANÇA: Em vez de st.dataframe, usamos st.table para gerar HTML nativo
+            # Isso garante que a tabela quebre perfeitamente nas páginas impressas
+            try:
+                # hide(axis="index") esconde a primeira coluna de números (1, 2, 3...)
+                styled_tela = df_tela.style.map(highlight_status, subset=['Status']).hide(axis="index")
+            except:
+                # Fallback de segurança para versões do pandas
+                styled_tela = df_tela.style.map(highlight_status, subset=['Status']).hide_index()
+            
+            st.table(styled_tela)
 
         # =========================================================
         # BLOCO DE ASSINATURAS NO RODAPÉ E RESUMO POR LOJA
@@ -555,7 +566,6 @@ elif perfil in ["admin", "supervisor"]:
         # =========================================================
         st.markdown("<br><hr>", unsafe_allow_html=True)
         
-        # Cria 3 colunas padrão
         col_export, col_print, col_clear = st.columns([1, 1, 1])
 
         # --- 1. Botão Exportar Excel ---
@@ -573,7 +583,7 @@ elif perfil in ["admin", "supervisor"]:
                 type="primary"
             )
 
-        # --- 2. Botão Imprimir Tela (JS Nativo) ---
+        # --- 2. Botão Imprimir Tela ---
         with col_print:
             components.html(
                 """
