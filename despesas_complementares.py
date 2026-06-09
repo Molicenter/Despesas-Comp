@@ -309,10 +309,8 @@ elif perfil in ["admin", "supervisor"]:
         
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("### ⏳ Avaliação em Lote (Lançamentos Pendentes)")
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("### ⏳ Avaliação em Lote (Lançamentos Pendentes)")
-        
+       
+               
         if df_pendentes.empty:
             st.info("✨ Maravilha! Não há despesas pendentes de aprovação no momento.")
         else:
