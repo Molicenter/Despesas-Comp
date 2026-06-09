@@ -80,12 +80,25 @@ st.markdown("""
         p, h1, h2, h3, h4, h5, h6, span, label { color: #000000 !important; }
         
         /* Estiliza os cards para impressão (branco com borda preta) */
-        .print-card {
-            bkground-color: #FFFFFF !important; 
-            border: 1px solid #000000 !important;
-            box-shadow: none !important;
-        }
-        .print-card p, .print-card h2 { color: #000000 !important; }
+       .print-card {
+    background: #FFFFFF !important;
+    background-color: #FFFFFF !important;
+    border: 1px solid #000000 !important;
+    box-shadow: none !important;
+}
+
+.print-card * {
+    color: #000000 !important;
+}
+
+.print-card p,
+.print-card h1,
+.print-card h2,
+.print-card h3,
+.print-card h4,
+.print-card h5 {
+    color: #000000 !important;
+}
 
         /* Ajusta o título para nunca se separar da tabela */
         h3 {
