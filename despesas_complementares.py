@@ -383,7 +383,7 @@ elif perfil in ["admin", "supervisor"]:
         # --- AVALIAÇÃO EM LOTE ---
         st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("### ⏳ Avaliação em Lote (Lançamentos Pendentes)")
-               
+                
         if df_pendentes.empty:
             st.info("✨ Maravilha! Não há despesas pendentes de aprovação no momento.")
         else:
@@ -451,7 +451,7 @@ elif perfil in ["admin", "supervisor"]:
                             time.sleep(1.5)
                             st.rerun()
 
-       # =========================================================
+        # =========================================================
         # TABELA CONSOLIDADA E HISTÓRICO
         # =========================================================
         st.markdown("<br><hr>", unsafe_allow_html=True)
@@ -475,7 +475,7 @@ elif perfil in ["admin", "supervisor"]:
             if 'Carimbo de Data/Hora' in df_tela.columns:
                 df_tela = df_tela.drop(columns=['Carimbo de Data/Hora'])
 
-           def highlight_status(val):
+            def highlight_status(val):
                 if val == 'Aprovado':
                     return 'color: #10b981; font-weight: bold;'
                 elif val == 'Reprovado':
@@ -490,7 +490,7 @@ elif perfil in ["admin", "supervisor"]:
                 df_tela.style.map(highlight_status, subset=['Autorização Supervisor']),
                 use_container_width=True,
                 hide_index=True,
-                height=altura_tabela,  # <--- AQUI ESTÁ A MÁGICA
+                height=altura_tabela,
                 column_config={
                     "Loja": st.column_config.NumberColumn("Loja", width="small"),
                     "Data Trabalhada": st.column_config.TextColumn("Data Trabalhada", width="small"),
@@ -498,6 +498,7 @@ elif perfil in ["admin", "supervisor"]:
                     "Autorização Supervisor": st.column_config.TextColumn("Status", width="small")
                 }
             )
+
         # =========================================================
         # BLOCO DE ASSINATURAS NO RODAPÉ E RESUMO POR LOJA
         # =========================================================
