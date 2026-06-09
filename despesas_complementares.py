@@ -9,7 +9,7 @@ import os
 import streamlit.components.v1 as components
 
 # =========================================================
-# 1. CONFIGURAÇÕES INICIAIS
+# 1. CONFIGURAÇÕES INICIAIS E CSS
 # =========================================================
 st.set_page_config(
     page_title="Despesas Complementares - Molicenter", 
@@ -21,56 +21,52 @@ st.markdown("""
     <style>
     [data-testid="collapsedControl"] {display: none;}
     
-    /* Ajuste para tabela HTML nativa ocupar 100% da largura na tela normal */
-    [data-testid="stTable"] table {
-        width: 100% !important;
+    /* ESTILOS DA NOSSA NOVA TABELA NATIVA (Para a Tela) */
+    .custom-table table {
+        width: 100%;
+        border-collapse: collapse;
+        color: #f8fafc; 
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+    .custom-table th, .custom-table td {
+        border-bottom: 1px solid #334155;
+        padding: 8px 10px;
+        text-align: left;
+    }
+    .custom-table th {
+        color: #94a3b8;
+        font-weight: 600;
     }
 
     /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA --- */
     @media print {
-        /* Define PAISAGEM e margens */
         @page {
             size: landscape;
             margin: 10mm;
         }
         
-        /* AVISO: ZOOM REMOVIDO! O zoom causava o bug do "buraco gigante" no Chrome */
-
         /* Esconde menus e botões */
         header, footer, [data-testid="stToolbar"], [data-testid="stManageApp"], button, iframe { 
             display: none !important; 
         }
         
-        /* Destrava a altura e remove fundos de todas as caixas estruturais principais */
-        html, body, .stApp, main, 
-        [data-testid="stAppViewContainer"], 
-        [data-testid="stHeader"], 
-        [data-testid="block-container"] {
-            display: block !important;
-            width: 100% !important;
+        /* Destrava absolutamente todos os contêineres do Streamlit */
+        html, body, .stApp, main, [data-testid="stAppViewContainer"], [data-testid="block-container"] {
             height: auto !important;
             min-height: 0 !important;
             max-height: none !important;
             overflow: visible !important;
             background-color: #FFFFFF !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-
-        /* CORREÇÃO DOS BURACOS: Achata todos os blocos verticais do Streamlit */
-        [data-testid="stVerticalBlock"], 
-        [data-testid="stVerticalBlockBorderWrapper"], 
-        .element-container {
-            display: block !important;
-            width: 100% !important;
-            height: auto !important;
-            min-height: 0 !important;
-            overflow: visible !important;
-            gap: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
         }
         
+        /* Garante que nada fique preso em blocos */
+        .element-container, [data-testid="stVerticalBlock"], [data-testid="stHorizontalBlock"] {
+            height: auto !important;
+            overflow: visible !important;
+            page-break-inside: auto !important;
+        }
+
         /* Mantém elementos como os cards lado a lado de forma segura */
         [data-testid="stHorizontalBlock"] {
             display: flex !important;
@@ -80,18 +76,16 @@ st.markdown("""
             margin-bottom: 10px !important;
         }
 
-        /* Força fontes limpas e cor preta para tudo */
-        *, p, h1, h2, h3, h4, h5, h6, span, label, th, td { 
-            color: #000000 !important; 
-            font-family: Arial, sans-serif !important;
-        }
+        /* Cores em preto puro para contraste */
+        p, h1, h2, h3, h4, h5, h6, span, label { color: #000000 !important; }
         
-        /* Cards brancos com borda preta */
+        /* Estiliza os cards para impressão (branco com borda preta) */
         .print-card {
             background-color: #FFFFFF !important; 
             border: 1px solid #000000 !important;
             box-shadow: none !important;
         }
+        .print-card p, .print-card h2 { color: #000000 !important; }
 
         /* Ajusta o título para nunca se separar da tabela */
         h3 {
@@ -106,33 +100,19 @@ st.markdown("""
             border-top: 1px solid #ccc !important;
         }
 
-        /* MÁGICA DA TABELA SEM BURACOS: Libera a tabela e diminui a fonte diretamente (sem zoom) */
-        [data-testid="stTable"], [data-testid="stTable"] > div {
-            display: block !important;
-            height: auto !important;
-            overflow: visible !important;
-            margin: 0 !important;
-            padding: 0 !important;
+        /* MÁGICA DA TABELA HTML: Imprime perfeitamente e quebra nas linhas certas */
+        .custom-table table, .custom-table th, .custom-table td {
+            color: #000000 !important;
+            border-bottom: 1px solid #999999 !important;
+            font-size: 11px !important;
         }
-
         table { 
             page-break-inside: auto !important; 
-            border-collapse: collapse !important; 
-            width: 100% !important; 
-            margin-bottom: 20px !important;
         }
-        
         tr { 
             page-break-inside: avoid !important; 
             page-break-after: auto !important; 
         }
-        
-        th, td { 
-            border-bottom: 1px solid #999 !important; 
-            padding: 4px 6px !important; /* Células mais estreitas */
-            font-size: 11px !important;  /* Fonte menor reduz a tabela de forma nativa e sem bugs */
-        }
-        
         thead { display: table-header-group !important; }
         tfoot { display: table-footer-group !important; }
 
@@ -519,7 +499,7 @@ elif perfil in ["admin", "supervisor"]:
                             st.rerun()
 
         # =========================================================
-        # TABELA CONSOLIDADA E HISTÓRICO
+        # TABELA CONSOLIDADA E HISTÓRICO - INJEÇÃO HTML DIRETA
         # =========================================================
         st.markdown("<hr style='margin: 15px 0;'>", unsafe_allow_html=True)
         st.markdown("<h3>📚 Despesas Complementares dessa semana</h3>", unsafe_allow_html=True)
@@ -531,23 +511,17 @@ elif perfil in ["admin", "supervisor"]:
                 by=['Loja', 'Carimbo de Data/Hora'], ascending=[True, False]
             ).reset_index(drop=True)
 
-            # df_view mantém todos os dados (usaremos ele para o Excel)
             df_view = df_historico.copy()
             df_view['Valor'] = df_view['Valor'].apply(
                 lambda x: f"R$ {float(x):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
             )
 
-            # df_tela será usado apenas na visualização
             df_tela = df_view.copy()
-            
-            # Removemos a coluna do carimbo para dar mais espaço no papel
             if 'Carimbo de Data/Hora' in df_tela.columns:
                 df_tela = df_tela.drop(columns=['Carimbo de Data/Hora'])
 
-            # Encurtamos o nome da última coluna para otimizar espaço
             df_tela.rename(columns={'Autorização Supervisor': 'Status'}, inplace=True)
 
-            # Função de colorir aprovados/reprovados
             def highlight_status(val):
                 if val == 'Aprovado':
                     return 'color: #10b981; font-weight: bold;'
@@ -555,13 +529,13 @@ elif perfil in ["admin", "supervisor"]:
                     return 'color: #ef4444; font-weight: bold;'
                 return ''
 
-            # Usamos st.table para gerar a tabela em HTML real (para cortar na impressão)
+            # BURLANDO O STREAMLIT: Geramos o HTML direto do Pandas e injetamos
             try:
-                styled_tela = df_tela.style.map(highlight_status, subset=['Status']).hide(axis="index")
+                html_tabela = df_tela.style.map(highlight_status, subset=['Status']).hide(axis="index").to_html()
             except:
-                styled_tela = df_tela.style.map(highlight_status, subset=['Status']).hide_index()
+                html_tabela = df_tela.style.map(highlight_status, subset=['Status']).hide_index().to_html()
             
-            st.table(styled_tela)
+            st.markdown(f'<div class="custom-table">{html_tabela}</div>', unsafe_allow_html=True)
 
         # =========================================================
         # BLOCO DE ASSINATURAS NO RODAPÉ E RESUMO POR LOJA
@@ -592,11 +566,13 @@ elif perfil in ["admin", "supervisor"]:
                 _, col_tabela_centro, _ = st.columns([1, 2, 1])
                 
                 with col_tabela_centro:
-                    # Também passamos o resumo para st.table para estabilidade
+                    # Injetando o resumo como HTML puro também
                     try:
-                        st.table(resumo_lojas.style.hide(axis="index"))
+                        html_resumo = resumo_lojas.style.hide(axis="index").to_html()
                     except:
-                        st.table(resumo_lojas.style.hide_index())
+                        html_resumo = resumo_lojas.style.hide_index().to_html()
+                        
+                    st.markdown(f'<div class="custom-table">{html_resumo}</div>', unsafe_allow_html=True)
             else:
                 st.info("Nenhuma despesa aprovada até o momento.")
 
