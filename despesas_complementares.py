@@ -6,6 +6,7 @@ from datetime import datetime
 import time
 import io
 import os
+import streamlit.components.v1 as components
 
 # =========================================================
 # 1. CONFIGURAÇÕES INICIAIS
@@ -22,17 +23,17 @@ st.markdown("""
     
     /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA --- */
     @media print {
-        /* Esconde o cabeçalho, rodapé e botão "Manage App" do Streamlit */
+        /* Esconde o cabeçalho, rodapé e botões do Streamlit no papel */
         header, footer, [data-testid="stToolbar"], [data-testid="stManageApp"] { 
             display: none !important; 
         }
         
         /* Força as letras a ficarem pretas no papel branco */
-        .stApp, p, h1, h2, h3, h4, h5, h6, span, div { 
+        .stApp, p, h1, h2, h3, h4, h5, h6, span, div, label { 
             color: black !important; 
         }
         
-        /* Obriga a impressora a imprimir os fundos coloridos (os 4 cards lá de cima) */
+        /* Obriga a impressora a imprimir os fundos coloridos (os cards) */
         * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
@@ -96,7 +97,6 @@ if "logado_despesas" not in st.session_state:
 # 2. TELA DE LOGIN (PADRONIZADA)
 # =========================================================
 if not st.session_state["logado_despesas"]:
-    # Estilização CSS para o botão ficar verde como no outro portal
     st.markdown("""
         <style>
         div.stButton > button {
@@ -329,10 +329,8 @@ elif perfil in ["admin", "supervisor"]:
         df_aprovados = df_exibicao[df_exibicao['Autorização Supervisor'] == 'Aprovado'].copy()
         df_reprovados = df_exibicao[df_exibicao['Autorização Supervisor'] == 'Reprovado'].copy()
             
-        # Estrutura com 4 colunas para o resumo
         col1, col2, col3, col4 = st.columns(4)
         
-        # Função para criar os cards estilizados
         def card_metrica(coluna, titulo, qtd, valor, cor_valor):
             coluna.markdown(f"""
             <div style='background-color:#1e293b; padding:15px; border-radius:8px; border:1px solid #334155; text-align:center;'>
@@ -347,8 +345,8 @@ elif perfil in ["admin", "supervisor"]:
         card_metrica(col3, "Reprovados", len(df_reprovados), df_reprovados['Valor'].sum(), "#ef4444")
         card_metrica(col4, "Total Geral", len(df_exibicao), df_exibicao['Valor'].sum(), "#38bdf8")
 
-               # --- AVALIAÇÃO EM LOTE ---
-        st.markdown("<br><hr>", unsafe_allow_html=True)
+        # --- AVALIAÇÃO EM LOTE ---
+        st.markdown("<br>", unsafe_allow_html=True)
         st.markdown("### ⏳ Avaliação em Lote (Lançamentos Pendentes)")
                
         if df_pendentes.empty:
@@ -449,7 +447,7 @@ elif perfil in ["admin", "supervisor"]:
                 hide_index=True
             )
 
-     # =========================================================
+        # =========================================================
         # BLOCO DE ASSINATURAS NO RODAPÉ E RESUMO POR LOJA
         # =========================================================
         st.markdown("<br><br>", unsafe_allow_html=True)
@@ -463,7 +461,7 @@ elif perfil in ["admin", "supervisor"]:
             else:
                 st.markdown("<br><br>", unsafe_allow_html=True)
 
-       # --- MEIO: RESUMO POR LOJA ---
+        # --- MEIO: RESUMO POR LOJA ---
         with col_space:
             st.markdown("<h4 style='text-align: center; margin-top: 0;'>🏪 Resumo de Aprovados por Loja</h4>", unsafe_allow_html=True)
             
@@ -476,7 +474,6 @@ elif perfil in ["admin", "supervisor"]:
                 resumo_lojas['Total_RS'] = resumo_lojas['Total_RS'].apply(lambda x: f"R$ {x:,.2f}")
                 resumo_lojas.rename(columns={'Loja': 'Loja', 'Qtde': 'Qtde', 'Total_RS': 'R$'}, inplace=True)
                 
-                # Criamos 3 sub-colunas para "espremer" a tabela no centro
                 _, col_tabela_centro, _ = st.columns([1, 2, 1])
                 
                 with col_tabela_centro:
@@ -500,18 +497,16 @@ elif perfil in ["admin", "supervisor"]:
             else:
                 st.markdown("<br><br>", unsafe_allow_html=True)
 
-        # Linha separadora antes dos botões de Exportar e Limpar
-        st.markdown("<br><hr>", unsafe_allow_html=True)
-        # =========================================================
-        # BOTÕES DE EXPORTAR E LIMPAR (NO FINAL DA PÁGINA)
-        # =========================================================
-        # Linha de botões: Exportar Excel + Limpar Registros
-        if perfil == "admin":
-            col_export, col_clear = st.columns([0.5, 0.5])
-        else:
-            col_export, _ = st.columns([0.3, 0.7])
 
-        # --- Botão Exportar Excel ---
+        # =========================================================
+        # BOTÕES DE EXPORTAR, IMPRIMIR E LIMPAR
+        # =========================================================
+        st.markdown("<br><hr>", unsafe_allow_html=True)
+        
+        # Cria 3 colunas padrão
+        col_export, col_print, col_clear = st.columns([1, 1, 1])
+
+        # --- 1. Botão Exportar Excel ---
         buffer = io.BytesIO()
         with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
             df_view.to_excel(writer, index=False, sheet_name='Histórico')
@@ -522,10 +517,23 @@ elif perfil in ["admin", "supervisor"]:
                 data=buffer.getvalue(),
                 file_name=f"historico_despesas_{datetime.now().strftime('%d%m%Y')}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True,
                 type="primary"
             )
 
-        # --- Botão Limpar Registros (somente admin) ---
+        # --- 2. Botão Imprimir Tela (JS Nativo) ---
+        with col_print:
+            components.html(
+                """
+                <button onclick="window.parent.print()" 
+                    style="width: 100%; background-color: #475569; color: white; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-family: sans-serif; font-weight: 600; font-size: 15px; box-sizing: border-box;">
+                    🖨️ Imprimir Tela
+                </button>
+                """,
+                height=45
+            )
+
+        # --- 3. Botão Limpar Registros (somente admin) ---
         if perfil == "admin":
             @st.dialog("⚠️ Confirmar Limpeza de Registros")
             def dialog_limpar():
@@ -559,5 +567,5 @@ elif perfil in ["admin", "supervisor"]:
                         st.rerun()
 
             with col_clear:
-                if st.button("🗑️ Limpar Registros (Nova Semana)", use_container_width=True):
+                if st.button("🗑️ Limpar Nova Semana", use_container_width=True):
                     dialog_limpar()
