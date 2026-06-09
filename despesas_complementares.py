@@ -28,7 +28,7 @@ st.markdown("""
 
     /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA --- */
     @media print {
-        /* 1. Força o modo PAISAGEM e define margens limpas */
+        /* 1. Define PAISAGEM e margens limpas */
         @page {
             size: landscape;
             margin: 1cm;
@@ -41,53 +41,65 @@ st.markdown("""
             display: none !important; 
         }
         
-        /* 3. Fundo branco absoluto e libera as alturas */
-        html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], main, .stApp {
-            background-color: #FFFFFF !important;
-            background: #FFFFFF !important;
+        /* 3. A REGRA DEMOLIDORA: Força TODAS as caixas estruturais do Streamlit a 
+           virarem blocos simples, destravando a altura e parando as sobreposições */
+        html, body, .stApp, main, 
+        [data-testid="stAppViewContainer"], 
+        [data-testid="stHeader"], 
+        [data-testid="block-container"], 
+        [data-testid="stVerticalBlock"], 
+        [data-testid="stVerticalBlockBorderWrapper"], 
+        .element-container {
+            display: block !important;
+            width: 100% !important;
             height: auto !important;
-            min-height: auto !important;
+            max-height: none !important;
+            min-height: 0 !important;
+            overflow: visible !important;
+            position: relative !important;
+            background-color: #FFFFFF !important;
+        }
+
+        /* 4. Libera especificamente o contêiner da tabela para crescer */
+        [data-testid="stTable"], [data-testid="stTable"] > div {
+            display: block !important;
+            height: auto !important;
+            max-height: none !important;
             overflow: visible !important;
         }
-        
-        /* 4. Cores de texto pretas */
+
+        /* 5. Mantém as colunas (cards e assinaturas) lado a lado, mas impede que quebrem no meio */
+        [data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            page-break-inside: avoid !important;
+            height: auto !important;
+            overflow: visible !important;
+        }
+
+        /* 6. Cores de texto pretas */
         p, h1, h2, h3, h4, h5, h6, span, label, th, td { color: #000000 !important; }
         
-        /* 5. Estiliza os cards para impressão */
+        /* 7. Estiliza os cards para impressão (branco com borda preta) */
         .print-card {
             background-color: #FFFFFF !important; 
             border: 1.5px solid #000000 !important;
             box-shadow: none !important;
-            page-break-inside: avoid !important;
         }
         .print-card p, .print-card h2 { color: #000000 !important; }
 
-        /* 6. CORREÇÃO DO BURACO GIGANTE: Destrava as caixas invisíveis do Streamlit */
-        .element-container, .stMarkdown, [data-testid="stVerticalBlock"], [data-testid="stHorizontalBlock"] {
-            page-break-inside: auto !important;
-            page-break-before: auto !important;
-            page-break-after: auto !important;
-            height: auto !important;
-            overflow: visible !important;
-        }
-
-        /* 7. Gruda o título na tabela */
+        /* 8. Gruda o título na tabela */
         h3 {
             page-break-after: avoid !important;
-            margin-bottom: 0px !important;
+            margin-bottom: 5px !important;
             padding-bottom: 0px !important;
         }
 
-        /* 8. MÁGICA DA QUEBRA DE PÁGINA (Linha por linha) */
-        [data-testid="stTable"] {
-            page-break-before: auto !important;
-            page-break-inside: auto !important;
-        }
+        /* 9. MÁGICA DA QUEBRA DE PÁGINA NAS TABELAS */
         table { 
             page-break-inside: auto !important; 
             border-collapse: collapse !important; 
             width: 100% !important; 
-            margin-top: 0px !important;
         }
         tr { 
             page-break-inside: avoid !important; 
