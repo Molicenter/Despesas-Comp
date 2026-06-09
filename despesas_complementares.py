@@ -15,17 +15,14 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Oculta completamente a seta de abrir o menu lateral do Streamlit
 st.markdown("""
     <style>
     [data-testid="collapsedControl"] {display: none;}
     </style>
 """, unsafe_allow_html=True)
 
-# URL GERADA NO GOOGLE APPS SCRIPT
 URL_API_DESPESAS = "https://script.google.com/macros/s/AKfycbwbOdR--mh46XzwbUId8P4OsxQ8-T8ItbE4JwErh10qwMLWWt1S1vYUIFkK1mnzkxArYw/exec" 
 
-# Banco de Usuários
 USUARIOS_DB = {
     "admin@molicenter.com.br": {"senha": "moli0000", "perfil": "admin", "loja_fixa": None},
     "supervisor@molicenter.com.br": {"senha": "moli0000", "perfil": "supervisor", "loja_fixa": None},
@@ -40,7 +37,6 @@ USUARIOS_DB = {
     "loja30@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 30},
 }
 
-# Opções de Seleção
 OPCOES_MOTIVO = [
     "Ajuste Modular", 
     "Despesas (Justificar)", 
@@ -381,32 +377,51 @@ elif perfil in ["admin", "supervisor"]:
                             time.sleep(1.5)
                             st.rerun()
 
+        # =========================================================
+        # TABELA CONSOLIDADA (substitui o expander de histórico)
+        # =========================================================
         st.markdown("<br><hr>", unsafe_allow_html=True)
-        with st.expander("📚 Ver Histórico Geral de Avaliações", expanded=False):
-            if df_historico.empty:
-                st.info("Nenhuma despesa foi avaliada ainda.")
+        st.markdown("### 📚 Histórico Geral de Avaliações")
+
+        if df_historico.empty:
+            st.info("Nenhuma despesa foi avaliada ainda.")
+        else:
+            df_historico = df_historico.sort_values(
+                by=['Loja', 'Carimbo de Data/Hora'], ascending=[True, False]
+            ).reset_index(drop=True)
+
+            df_view = df_historico.copy()
+            df_view['Valor'] = df_view['Valor'].apply(
+                lambda x: f"R$ {float(x):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            )
+
+            def highlight_status(val):
+                if val == 'Aprovado':
+                    return 'color: #10b981; font-weight: bold;'
+                elif val == 'Reprovado':
+                    return 'color: #ef4444; font-weight: bold;'
+                return ''
+
+            st.dataframe(
+                df_view.style.map(highlight_status, subset=['Autorização Supervisor']),
+                use_container_width=True,
+                hide_index=True
+            )
+
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            # Linha de botões: Exportar Excel + Limpar Registros (apenas admin)
+            if perfil == "admin":
+                col_export, col_clear = st.columns([0.5, 0.5])
             else:
-                df_historico = df_historico.sort_values(by=['Loja', 'Carimbo de Data/Hora'], ascending=[True, False]).reset_index(drop=True)
-                df_view = df_historico.copy()
-                
-                df_view['Valor'] = df_view['Valor'].apply(lambda x: f"R$ {float(x):,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
-                
-                def highlight_status(val):
-                    if val == 'Aprovado':
-                        return 'color: #10b981; font-weight: bold;'
-                    elif val == 'Reprovado':
-                        return 'color: #ef4444; font-weight: bold;'
-                    return ''
-                
-                st.dataframe(df_view.style.map(highlight_status, subset=['Autorização Supervisor']), use_container_width=True, hide_index=True)
-                
-                st.markdown("<br>", unsafe_allow_html=True)
-                
-                # Exportação apenas para Excel
-                buffer = io.BytesIO()
-                with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                    df_view.to_excel(writer, index=False, sheet_name='Histórico')
-                
+                col_export, _ = st.columns([0.3, 0.7])
+
+            # --- Botão Exportar Excel ---
+            buffer = io.BytesIO()
+            with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+                df_view.to_excel(writer, index=False, sheet_name='Histórico')
+
+            with col_export:
                 st.download_button(
                     label="📊 Exportar Histórico (Excel)",
                     data=buffer.getvalue(),
@@ -414,3 +429,42 @@ elif perfil in ["admin", "supervisor"]:
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     type="primary"
                 )
+
+            # --- Botão Limpar Registros (somente admin) ---
+            if perfil == "admin":
+
+                # Modal de confirmação com st.dialog
+                @st.dialog("⚠️ Confirmar Limpeza de Registros")
+                def dialog_limpar():
+                    st.warning(
+                        "Esta ação irá **apagar TODOS os registros** da planilha de forma permanente, "
+                        "preparando o sistema para uma nova semana.\n\n"
+                        "**Esta operação não pode ser desfeita.**"
+                    )
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    col_sim, col_nao = st.columns(2)
+
+                    with col_sim:
+                        if st.button("✅ Sim, limpar tudo", type="primary", use_container_width=True):
+                            with st.spinner("🗑️ Limpando todos os registros..."):
+                                payload_clear = {"action": "clear_all"}
+                                sucesso_clear = False
+                                try:
+                                    requests.post(URL_API_DESPESAS, json=payload_clear, timeout=20)
+                                    sucesso_clear = True
+                                except Exception as e:
+                                    st.error(f"Erro ao limpar: {e}")
+
+                            if sucesso_clear:
+                                st.success("✅ Todos os registros foram removidos!")
+                                st.cache_data.clear()
+                                time.sleep(1.5)
+                                st.rerun()
+
+                    with col_nao:
+                        if st.button("❌ Cancelar", use_container_width=True):
+                            st.rerun()
+
+                with col_clear:
+                    if st.button("🗑️ Limpar Registros (Nova Semana)", use_container_width=True):
+                        dialog_limpar()
