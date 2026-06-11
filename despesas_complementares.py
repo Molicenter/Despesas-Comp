@@ -40,100 +40,96 @@ st.markdown("""
     }
 
     /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA --- */
-    @media print {
+     @media print {
         @page {
             size: landscape;
-            margin: 10mm;
+            margin: 6mm;
         }
         
-        /* Esconde menus e botões */
-        header, footer, [data-testid="stToolbar"], [data-testid="stManageApp"], button, iframe { 
+        header, footer, [data-testid="stToolbar"], [data-testid="stManageApp"], 
+        button, iframe, hr, h2, [data-testid="stAlert"],
+        [data-testid="stDataEditor"], .stDownloadButton { 
             display: none !important; 
         }
         
-        /* Destrava absolutamente todos os contêineres do Streamlit */
         html, body, .stApp, main, [data-testid="stAppViewContainer"], [data-testid="block-container"] {
             height: auto !important;
             min-height: 0 !important;
             max-height: none !important;
             overflow: visible !important;
             background-color: #FFFFFF !important;
+            padding: 0 !important;
+            margin: 0 !important;
         }
         
-        /* Garante que nada fique preso em blocos */
         .element-container, [data-testid="stVerticalBlock"], [data-testid="stHorizontalBlock"] {
             height: auto !important;
             overflow: visible !important;
             page-break-inside: auto !important;
         }
 
-        /* Mantém elementos como os cards lado a lado de forma segura */
         [data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
             flex-wrap: nowrap !important;
             page-break-inside: avoid !important;
-            margin-bottom: 10px !important;
+            margin-bottom: 4px !important;
+            gap: 4px !important;
         }
 
-        /* Cores em preto puro para contraste */
-        p, h1, h2, h3, h4, h5, h6, span, label { color: #000000 !important; }
-        
-        /* Estiliza os cards para impressão (branco com borda preta) */
-       .print-card {
-    background: #FFFFFF !important;
-    background-color: #FFFFFF !important;
-    border: 1px solid #000000 !important;
-    box-shadow: none !important;
-}
+        /* Esconde os cards de métricas (Pendentes/Aprovados/etc) na impressão */
+        [data-testid="stHorizontalBlock"]:first-of-type {
+            display: none !important;
+        }
 
-.print-card * {
-    color: #000000 !important;
-}
-
-.print-card p,
-.print-card h1,
-.print-card h2,
-.print-card h3,
-.print-card h4,
-.print-card h5 {
-    color: #000000 !important;
-}
-
-        /* Ajusta o título para nunca se separar da tabela */
-        h3 {
-            page-break-after: avoid !important;
-            margin-top: 15px !important;
-            margin-bottom: 5px !important;
+        p, h1, h2, h3, h4, h5, h6, span, label { 
+            color: #000000 !important; 
+            margin: 0 !important;
             padding: 0 !important;
         }
+        
+        .print-card {
+            background: #FFFFFF !important;
+            background-color: #FFFFFF !important;
+            border: 1px solid #000000 !important;
+            box-shadow: none !important;
+        }
+        .print-card * { color: #000000 !important; }
 
-        hr {
-            margin: 10px 0 !important;
-            border-top: 1px solid #ccc !important;
+        h3 {
+            page-break-after: avoid !important;
+            margin-top: 6px !important;
+            margin-bottom: 2px !important;
+            padding: 0 !important;
+            font-size: 11px !important;
         }
 
-        /* MÁGICA DA TABELA HTML: Imprime perfeitamente e quebra nas linhas certas */
+        h4 {
+            font-size: 10px !important;
+            margin: 0 !important;
+        }
+
+        /* TABELA ULTRA-COMPACTA */
         .custom-table table, .custom-table th, .custom-table td {
             color: #000000 !important;
-            border-bottom: 1px solid #999999 !important;
-            font-size: 9px !important;
-    padding: 2px 4px !important;
-    line-height: 1.0 !important;
-}
+            border-bottom: 1px solid #aaaaaa !important;
+            font-size: 7.5px !important;
+            padding: 1px 3px !important;
+            line-height: 1.1 !important;
+        }
+
+        .custom-table th {
+            font-weight: bold !important;
+            background-color: #f0f0f0 !important;
+        }
         
-        table { 
-            page-break-inside: auto !important; 
-        }
-        tr { 
-            page-break-inside: avoid !important; 
-            page-break-after: auto !important; 
-        }
+        table { page-break-inside: auto !important; }
+        tr { page-break-inside: avoid !important; page-break-after: auto !important; }
         thead { display: table-header-group !important; }
         tfoot { display: table-footer-group !important; }
 
         * {
-            -webkit-print-color-adjust: ext !important;
+            -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
         }
     }
