@@ -13,6 +13,7 @@ import streamlit.components.v1 as components
 # =========================================================
 st.set_page_config(
     page_title="Despesas Complementares - Molicenter", 
+    page_icon="📉",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
