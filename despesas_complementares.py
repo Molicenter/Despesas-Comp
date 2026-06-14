@@ -53,7 +53,6 @@ st.markdown("""
         }
 
         /* 1. ANIQUILAR O FLEXBOX VERTICAL E FORÇAR MODO BLOCO */
-        /* Isso impede que o Streamlit estique a página e crie buracos brancos */
         html, body, #root, .stApp, main, 
         [data-testid="stAppViewContainer"], 
         [data-testid="block-container"], 
@@ -64,14 +63,14 @@ st.markdown("""
             height: auto !important;
             min-height: 0 !important;
             max-height: none !important;
-            flex: none !important; /* Desativa a expansão elástica */
+            flex: none !important; 
             padding-bottom: 0 !important;
             margin-bottom: 0 !important;
             background-color: #FFFFFF !important;
+            overflow: visible !important;
         }
 
         /* 2. REMOÇÃO ABSOLUTA DOS ELEMENTOS OCULTOS */
-        /* O position: absolute tira o elemento do fluxo, ocupando 0 pixels */
         button, iframe, header, footer, 
         [data-testid="stToolbar"], 
         [data-testid="stManageApp"],
@@ -87,18 +86,32 @@ st.markdown("""
             visibility: hidden !important;
         }
         
-        /* 3. MANTER COLUNAS HORIZONTAIS (Para as Assinaturas e Cards não quebrarem) */
+        /* 3. MANTER COLUNAS HORIZONTAIS */
         [data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
             flex-wrap: nowrap !important;
-            align-items: center !important;
-            gap: 10px !important;
+            align-items: flex-end !important; /* Alinha os blocos por baixo para não cortar topos */
+            gap: 15px !important;
             page-break-inside: avoid !important;
             margin-bottom: 5px !important;
+            overflow: visible !important;
         }
         [data-testid="stHorizontalBlock"] > div {
             flex: 1 1 0% !important;
+            display: block !important;
+            overflow: visible !important;
+        }
+
+        /* 4. CORREÇÃO DAS IMAGENS (Evita o corte nas assinaturas) */
+        [data-testid="stImage"], 
+        [data-testid="stImage"] > div, 
+        [data-testid="stImage"] img,
+        [data-testid="column"] {
+            height: auto !important;
+            max-height: none !important;
+            overflow: visible !important; /* Destrava a guilhotina do Streamlit */
+            object-fit: contain !important;
             display: block !important;
         }
 
