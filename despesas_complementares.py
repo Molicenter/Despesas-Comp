@@ -144,17 +144,17 @@ st.markdown("""
 URL_API_DESPESAS = "https://script.google.com/macros/s/AKfycbwbOdR--mh46XzwbUId8P4OsxQ8-T8ItbE4JwErh10qwMLWWt1S1vYUIFkK1mnzkxArYw/exec"
 
 USUARIOS_DB = {
-    "administrador@molicenter.com.br": {"senha": "moli0000", "perfil": "admin", "loja_fixa": None},
-    "supervisor@molicenter.com.br": {"senha": "moli0000", "perfil": "supervisor", "loja_fixa": None},
-    "loja01@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 1},
-    "loja02@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 2},
-    "loja03@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 3},
-    "loja04@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 4},
-    "loja05@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 5},
-    "loja06@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 6},
-    "loja07@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 7},
-    "loja08@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 8},
-    "loja30@molicenter.com.br": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 30},
+    "administrador": {"senha": "moli0000", "perfil": "admin", "loja_fixa": None},
+    "supervisor": {"senha": "moli0000", "perfil": "supervisor", "loja_fixa": None},
+    "loja01": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 1},
+    "loja02": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 2},
+    "loja03": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 3},
+    "loja04": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 4},
+    "loja05": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 5},
+    "loja06": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 6},
+    "loja07": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 7},
+    "loja08": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 8},
+    "loja30": {"senha": "moli1234", "perfil": "loja", "loja_fixa": 30},
 }
 
 OPCOES_MOTIVO = [
