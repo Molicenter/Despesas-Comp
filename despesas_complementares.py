@@ -468,6 +468,23 @@ elif perfil in ["admin", "supervisor"]:
                 st.session_state["status_lote_padrao"] = "🟡 Pendente"
 
             st.markdown("<br>", unsafe_allow_html=True)
+            
+            # Criamos proporções onde os botões ocupam pouco espaço e o resto fica vazio
+            col_all1, col_all2, col_all3, espaco_vazio = st.columns([1.2, 1.2, 1.2, 6])
+            
+            with col_all1:
+                if st.button("🟢 Aprovar Todos", use_container_width=True):
+                    st.session_state["status_lote_padrao"] = "🟢 Aprovado"
+                    st.rerun()
+            with col_all2:
+                if st.button("🔴 Reprovar Todos", use_container_width=True):
+                    st.session_state["status_lote_padrao"] = "🔴 Reprovado"
+                    st.rerun()
+            with col_all3:
+                if st.button("🔄 Pendentes", use_container_width=True):
+                    st.session_state["status_lote_padrao"] = "🟡 Pendente"
+                    st.rerun()
+            st.markdown("<br>", unsafe_allow_html=True)
             col_all1, col_all2, col_all3 = st.columns(3)
             
             with col_all1:
