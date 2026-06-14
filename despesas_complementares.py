@@ -45,14 +45,21 @@ st.markdown("""
 
     /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA --- */
     @media print {
+        /* Classe utilitária para esconder elementos de UI que deixam buracos na impressão */
+        .no-print { display: none !important; }
+
         @page {
             size: landscape;
             margin: 10mm;
         }
         
-        /* Esconde menus e botões */
-        header, footer, [data-testid="stToolbar"], [data-testid="stManageApp"], button, iframe { 
+        /* Esconde menus, botões nativos e caixas em branco */
+        header, footer, [data-testid="stToolbar"], [data-testid="stManageApp"], button, iframe, 
+        [data-testid="stButton"], [data-testid="stDownloadButton"] { 
             display: none !important; 
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
         
         /* Destrava absolutamente todos os contêineres do Streamlit */
@@ -95,8 +102,10 @@ st.markdown("""
             color: #000000 !important;
         }
 
-        /* TRUQUE PARA AS TABELAS: Esconde as pretas, mostra as brancas HTML */
-        [data-testid="stDataFrame"] { display: none !important; }
+        /* TRUQUE PARA AS TABELAS: Esconde as do Streamlit (que deixam gap branco) e mostra as em HTML */
+        [data-testid="stDataFrame"], [data-testid="stDataEditor"], [data-testid="stTable"] { 
+            display: none !important; 
+        }
         .print-only-table { display: block !important; }
 
         /* Ajusta o título para nunca se separar da tabela */
@@ -417,7 +426,7 @@ if perfil == "loja":
                                 st.warning("Por favor, selecione um registro na lista.")
         else:
             with col_tabela:
-                st.info("Nenhum registro encontrado para a sua loja até o momento.")
+                st.info("Nenhuma registro encontrado para a sua loja até o momento.")
     else:
         st.info("O banco de dados ainda está vazio.")
 
@@ -461,15 +470,16 @@ elif perfil in ["admin", "supervisor"]:
         if df_pendentes.empty:
             st.info("✨ Maravilha! Não há despesas pendentes de aprovação no momento.")
         else:
-            st.markdown("<span style='font-size:14px; color:#cbd5e1;'>Dê <b>dois cliques</b> na coluna <b>Avaliação 📝</b> para alterar o status, ou use os botões abaixo para marcação em lote. Ao finalizar, clique em salvar no final da página.</span>", unsafe_allow_html=True)
+            # Classes no-print adicionadas para limpar a impressão
+            st.markdown("<span class='no-print' style='font-size:14px; color:#cbd5e1;'>Dê <b>dois cliques</b> na coluna <b>Avaliação 📝</b> para alterar o status, ou use os botões abaixo para marcação em lote. Ao finalizar, clique em salvar no final da página.</span>", unsafe_allow_html=True)
             
             # --- AJUSTE SOLICITADO: LÓGICA DE SELECIONAR TODOS EM LOTE ---
             if "status_lote_padrao" not in st.session_state:
                 st.session_state["status_lote_padrao"] = "🟡 Pendente"
 
-            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("<br class='no-print'>", unsafe_allow_html=True)
             
-            # Criamos proporções onde os botões ocupam pouco espaço e o resto fica vazio
+            # Botões curtos e diretos (os largos duplicados foram apagados daqui)
             col_all1, col_all2, col_all3, espaco_vazio = st.columns([1.2, 1.2, 1.2, 6])
             
             with col_all1:
@@ -484,23 +494,8 @@ elif perfil in ["admin", "supervisor"]:
                 if st.button("🔄 Pendentes", use_container_width=True):
                     st.session_state["status_lote_padrao"] = "🟡 Pendente"
                     st.rerun()
-            st.markdown("<br>", unsafe_allow_html=True)
-            col_all1, col_all2, col_all3 = st.columns(3)
-            
-            with col_all1:
-                if st.button("<b>🟢 Aprovar Todos</b>", use_container_width=True, type="secondary"):
-                    st.session_state["status_lote_padrao"] = "🟢 Aprovado"
-                    st.rerun()
-            with col_all2:
-                if st.button("<b>🔴 Reprovar Todos</b>", use_container_width=True, type="secondary"):
-                    st.session_state["status_lote_padrao"] = "🔴 Reprovado"
-                    st.rerun()
-            with col_all3:
-                if st.button("<b>🔄 Voltar para Pendentes</b>", use_container_width=True, type="secondary"):
-                    st.session_state["status_lote_padrao"] = "🟡 Pendente"
-                    st.rerun()
-            st.markdown("<br>", unsafe_allow_html=True)
-            # --- FIM DA LÓGICA DE SELECIONAR TODOS ---
+
+            st.markdown("<br class='no-print'>", unsafe_allow_html=True)
 
             # Insere a coluna com o valor default armazenado no session_state
             df_pendentes.insert(0, 'Avaliação 📝', st.session_state["status_lote_padrao"])
@@ -540,7 +535,7 @@ elif perfil in ["admin", "supervisor"]:
                 html_pendentes = df_edicao.style.hide_index().to_html()
             st.markdown(f'<div class="print-only-table custom-table">{html_pendentes}</div>', unsafe_allow_html=True)
             
-            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("<br class='no-print'>", unsafe_allow_html=True)
             
             if st.button("💾 Salvar Alterações no Sistema", type="primary"):
                 mudancas = edited_df[edited_df['Avaliação 📝'] != '🟡 Pendente']
@@ -640,7 +635,7 @@ elif perfil in ["admin", "supervisor"]:
             if os.path.exists("Luciana.png"):
                 st.image("Luciana.png", use_container_width=True)
             else:
-                st.markdown("<br>", unsafe_allow_html=True)
+                st.markdown("<br class='no-print'>", unsafe_allow_html=True)
 
         # --- MEIO: RESUMO POR LOJA ---
         with col_space:
@@ -673,12 +668,12 @@ elif perfil in ["admin", "supervisor"]:
             if os.path.exists("Adriano.png"):
                 st.image("Adriano.png", use_container_width=True)
             else:
-                st.markdown("<br>", unsafe_allow_html=True)
+                st.markdown("<br class='no-print'>", unsafe_allow_html=True)
 
         # =========================================================
         # BOTÕES DE EXPORTAR, IMPRIMIR E LIMPAR
         # =========================================================
-        st.markdown("<hr style='margin: 15px 0;'>", unsafe_allow_html=True)
+        st.markdown("<hr class='no-print' style='margin: 15px 0;'>", unsafe_allow_html=True)
         
         col_export, col_print, col_clear = st.columns([1, 1, 1])
 
