@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
 import io
 import os
@@ -226,7 +226,9 @@ if not st.session_state["logado_despesas"]:
             
             lista_usuarios = ["Selecione..."] + list(USUARIOS_DB.keys())
             user_input = st.selectbox("👤 Usuário de acesso:", lista_usuarios)
-            pass_input = st.text_input("🔑 Senha de acesso:", type="password", placeholder="••••••••", autocomplete="new-password")
+            
+            # Ajuste 1: Autocomplete alterado para "off" para forçar o navegador a ignorar.
+            pass_input = st.text_input("🔑 Senha de acesso:", type="password", placeholder="••••••••", autocomplete="off")
             
             if st.button("Entrar no Sistema", use_container_width=True):
                 if user_input != "Selecione...":
@@ -258,7 +260,11 @@ def carregar_dados():
                 df['Data Trabalhada'] = df['Data Trabalhada'].fillna("-")
                 
             if 'Carimbo de Data/Hora' in df.columns:
-                df['Carimbo de Data/Hora'] = pd.to_datetime(df['Carimbo de Data/Hora'], errors='coerce').dt.strftime('%d/%m/%Y %H:%M')
+                # Ajuste 2: Correção do fuso horário UTC para UTC-3 (Brasil)
+                dt_series = pd.to_datetime(df['Carimbo de Data/Hora'], errors='coerce')
+                dt_series = dt_series - pd.Timedelta(hours=3) # Subtrai 3 horas
+                
+                df['Carimbo de Data/Hora'] = dt_series.dt.strftime('%d/%m/%Y %H:%M')
                 df['Carimbo de Data/Hora'] = df['Carimbo de Data/Hora'].fillna("-")
                 
             return df
@@ -631,22 +637,23 @@ elif perfil in ["admin", "supervisor"]:
 
         # --- 1. Botão Exportar Excel ---
         with col_export:
-            # Proteção: Só tenta gerar o Excel se a variável df_view existir no momento
             if 'df_view' in locals() and not df_view.empty:
                 buffer = io.BytesIO()
                 with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
                     df_view.to_excel(writer, index=False, sheet_name='Histórico')
-
+                
+                # Ajuste no nome do arquivo para garantir que a data reflete o dia atual do Brasil (-3 horas)
+                data_atual_br = datetime.now() - timedelta(hours=3)
+                
                 st.download_button(
                     label="📊 Exportar Histórico (Excel)",
                     data=buffer.getvalue(),
-                    file_name=f"historico_despesas_{datetime.now().strftime('%d%m%Y')}.xlsx",
+                    file_name=f"historico_despesas_{data_atual_br.strftime('%d%m%Y')}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     use_container_width=True,
                     type="primary"
                 )
             else:
-                # Se não tiver dados, mostra o botão desabilitado para não quebrar o layout
                 st.button(
                     label="📊 Exportar Histórico (Excel)",
                     disabled=True,
