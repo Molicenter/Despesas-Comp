@@ -45,52 +45,60 @@ st.markdown("""
 
     /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA --- */
     @media print {
-        /* Classe utilitária para esconder elementos de UI que deixam buracos na impressão */
-        .no-print { display: none !important; }
+        /* Classe utilitária para esconder elementos de UI */
+        .no-print { display: none !important; height: 0 !important; margin: 0 !important; }
 
         @page {
             size: landscape;
             margin: 10mm;
         }
         
-        /* Esconde menus, botões nativos e caixas em branco */
-        header, footer, [data-testid="stToolbar"], [data-testid="stManageApp"], button, iframe, 
-        [data-testid="stButton"], [data-testid="stDownloadButton"] { 
-            display: none !important; 
-            height: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        
-        /* Destrava absolutamente todos os contêineres do Streamlit */
+        /* 1. DESTRÓI O FLEXBOX VERTICAL DO STREAMLIT QUE CAUSA OS BURACOS GIGANTES */
+        /* Ao forçar o display: block, os elementos deixam de ser esticados para o fundo da página */
         html, body, .stApp, main, [data-testid="stAppViewContainer"], [data-testid="block-container"] {
+            display: block !important; 
             height: auto !important;
             min-height: 0 !important;
             max-height: none !important;
             overflow: visible !important;
+            padding: 0 !important;
+            margin: 0 !important;
             background-color: #FFFFFF !important;
         }
         
-        /* Garante que nada fique preso em blocos */
-        .element-container, [data-testid="stVerticalBlock"], [data-testid="stHorizontalBlock"] {
-            height: auto !important;
-            overflow: visible !important;
-            page-break-inside: auto !important;
+        /* 2. ANIQUILA OS CONTENTORES INVISÍVEIS (Elimina espaços fantasma) */
+        .element-container:has([data-testid="stDataEditor"]),
+        .element-container:has([data-testid="stDataFrame"]),
+        .element-container:has([data-testid="stTable"]),
+        .element-container:has([data-testid="stButton"]),
+        .element-container:has([data-testid="stDownloadButton"]),
+        .element-container:has(iframe) {
+            display: none !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            position: absolute !important;
         }
 
-        /* Mantém elementos como os cards lado a lado de forma segura */
+        /* 3. Esconde menus, cabeçalhos e rodapés padrão */
+        header, footer, [data-testid="stToolbar"], [data-testid="stManageApp"] { 
+            display: none !important; 
+        }
+        
+        /* 4. Mantém elementos como as assinaturas lado a lado de forma segura */
         [data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
             flex-wrap: nowrap !important;
             page-break-inside: avoid !important;
-            margin-bottom: 10px !important;
+            margin-bottom: 5px !important;
         }
 
         /* Cores em preto puro para contraste */
         p, h1, h2, h3, h4, h5, h6, span, label { color: #000000 !important; }
         
-        /* Estiliza os cards para impressão (branco com borda preta) */
+        /* Estiliza os cards de resumo para impressão */
        .print-card {
             background: #FFFFFF !important;
             background-color: #FFFFFF !important;
@@ -102,13 +110,10 @@ st.markdown("""
             color: #000000 !important;
         }
 
-        /* TRUQUE PARA AS TABELAS: Esconde as do Streamlit (que deixam gap branco) e mostra as em HTML */
-        [data-testid="stDataFrame"], [data-testid="stDataEditor"], [data-testid="stTable"] { 
-            display: none !important; 
-        }
+        /* Mostra a tabela HTML personalizada e esconde o resto */
         .print-only-table { display: block !important; }
 
-        /* Ajusta o título para nunca se separar da tabela */
+        /* Ajusta o título para nunca se separar da tabela e remove margens excessivas */
         h3 {
             page-break-after: avoid !important;
             margin-top: 15px !important;
@@ -121,13 +126,20 @@ st.markdown("""
             border-top: 1px solid #ccc !important;
         }
 
+        /* Reduz os espaçamentos das caixas de alerta (azul/amarela/verde) */
+        [data-testid="stAlert"] {
+            margin-top: 5px !important;
+            margin-bottom: 10px !important;
+            padding: 10px !important;
+        }
+
         /* MÁGICA DA TABELA HTML: Imprime perfeitamente e quebra nas linhas certas */
         .custom-table table, .custom-table th, .custom-table td {
             color: #000000 !important;
             border-bottom: 1px solid #999999 !important;
-            font-size: 9px !important;
-            padding: 2px 4px !important;
-            line-height: 1.0 !important;
+            font-size: 10px !important;
+            padding: 3px 4px !important;
+            line-height: 1.1 !important;
         }
         
         table { 
@@ -236,7 +248,7 @@ if not st.session_state["logado_despesas"]:
             lista_usuarios = ["Selecione..."] + list(USUARIOS_DB.keys())
             user_input = st.selectbox("👤 Usuário de acesso:", lista_usuarios)
             
-            # Ajuste 1: Autocomplete alterado para "off" para forçar o navegador a ignorar.
+            # Autocomplete off para ignorar sugestões
             pass_input = st.text_input("🔑 Senha de acesso:", type="password", placeholder="••••••••", autocomplete="off")
             
             if st.button("Entrar no Sistema", use_container_width=True):
@@ -269,7 +281,7 @@ def carregar_dados():
                 df['Data Trabalhada'] = df['Data Trabalhada'].fillna("-")
                 
             if 'Carimbo de Data/Hora' in df.columns:
-                # Ajuste 2: Correção do fuso horário UTC para UTC-3 (Brasil)
+                # Correção do fuso horário UTC para UTC-3 (Brasil)
                 dt_series = pd.to_datetime(df['Carimbo de Data/Hora'], errors='coerce')
                 dt_series = dt_series - pd.Timedelta(hours=3) # Subtrai 3 horas
                 
@@ -320,7 +332,7 @@ if perfil == "loja":
             valor = st.number_input("Valor (R$) *", min_value=0.0, step=10.0, format="%.2f", value=None)
             obs = st.text_area("Observações", placeholder="Justificativa ou transferência...")
             
-        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("<br class='no-print'>", unsafe_allow_html=True)
         submit = st.form_submit_button("💾 Registrar Despesa", type="primary", use_container_width=True)
         
         if submit:
@@ -426,7 +438,7 @@ if perfil == "loja":
                                 st.warning("Por favor, selecione um registro na lista.")
         else:
             with col_tabela:
-                st.info("Nenhuma registro encontrado para a sua loja até o momento.")
+                st.info("Nenhum registro encontrado para a sua loja até o momento.")
     else:
         st.info("O banco de dados ainda está vazio.")
 
@@ -470,16 +482,14 @@ elif perfil in ["admin", "supervisor"]:
         if df_pendentes.empty:
             st.info("✨ Maravilha! Não há despesas pendentes de aprovação no momento.")
         else:
-            # Classes no-print adicionadas para limpar a impressão
             st.markdown("<span class='no-print' style='font-size:14px; color:#cbd5e1;'>Dê <b>dois cliques</b> na coluna <b>Avaliação 📝</b> para alterar o status, ou use os botões abaixo para marcação em lote. Ao finalizar, clique em salvar no final da página.</span>", unsafe_allow_html=True)
             
-            # --- AJUSTE SOLICITADO: LÓGICA DE SELECIONAR TODOS EM LOTE ---
             if "status_lote_padrao" not in st.session_state:
                 st.session_state["status_lote_padrao"] = "🟡 Pendente"
 
             st.markdown("<br class='no-print'>", unsafe_allow_html=True)
             
-            # Botões curtos e diretos (os largos duplicados foram apagados daqui)
+            # Botões curtos e diretos
             col_all1, col_all2, col_all3, espaco_vazio = st.columns([1.2, 1.2, 1.2, 6])
             
             with col_all1:
@@ -501,7 +511,6 @@ elif perfil in ["admin", "supervisor"]:
             df_pendentes.insert(0, 'Avaliação 📝', st.session_state["status_lote_padrao"])
             df_edicao = df_pendentes.drop(columns=['Autorização Supervisor'])
             
-            # Chave dinâmica para forçar o Streamlit a redesenhar a tabela quando o lote mudar
             chave_editor = f"editor_lote_{st.session_state['status_lote_padrao']}"
 
             edited_df = st.data_editor(
@@ -546,7 +555,6 @@ elif perfil in ["admin", "supervisor"]:
                     with st.spinner(f"⏳ Processando e salvando {len(mudancas)} avaliações de uma vez..."):
                         lista_atualizacoes = []
                         for idx, row in mudancas.iterrows():
-                            # Limpando o Emoji antes de salvar no Google Sheets
                             status_selecionado = row['Avaliação 📝']
                             if "Aprovado" in status_selecionado:
                                 status_limpo = "Aprovado"
@@ -578,7 +586,6 @@ elif perfil in ["admin", "supervisor"]:
                             st.success("✅ Avaliações salvas com sucesso!")
                             st.cache_data.clear()
                             
-                            # Limpa a variável de lote para voltar a vir em branco na próxima vez
                             st.session_state["status_lote_padrao"] = "🟡 Pendente"
                             
                             time.sleep(1.5)
@@ -608,7 +615,6 @@ elif perfil in ["admin", "supervisor"]:
 
             df_tela.rename(columns={'Autorização Supervisor': 'Status'}, inplace=True)
 
-            # Aqui a cor via CSS funciona perfeitamente pois é HTML puro (não editável)
             def highlight_status(val):
                 if val == 'Aprovado':
                     return 'color: #10b981; font-weight: bold;'
@@ -616,7 +622,6 @@ elif perfil in ["admin", "supervisor"]:
                     return 'color: #ef4444; font-weight: bold;'
                 return ''
 
-            # BURLANDO O STREAMLIT: Geramos o HTML direto do Pandas e injetamos
             try:
                 html_tabela = df_tela.style.map(highlight_status, subset=['Status']).hide(axis="index").to_html()
             except:
@@ -653,7 +658,6 @@ elif perfil in ["admin", "supervisor"]:
                 _, col_tabela_centro, _ = st.columns([1, 2, 1])
                 
                 with col_tabela_centro:
-                    # Injetando o resumo como HTML puro também
                     try:
                         html_resumo = resumo_lojas.style.hide(axis="index").to_html()
                     except:
@@ -684,7 +688,6 @@ elif perfil in ["admin", "supervisor"]:
                 with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
                     df_view.to_excel(writer, index=False, sheet_name='Histórico')
                 
-                # Ajuste no nome do arquivo para garantir que a data reflete o dia atual do Brasil (-3 horas)
                 data_atual_br = datetime.now() - timedelta(hours=3)
                 
                 st.download_button(
@@ -724,7 +727,7 @@ elif perfil in ["admin", "supervisor"]:
                     "preparando o sistema para uma nova semana.\n\n"
                     "**Esta operação não pode ser desfeita.**"
                 )
-                st.markdown("<br>", unsafe_allow_html=True)
+                st.markdown("<br class='no-print'>", unsafe_allow_html=True)
                 col_sim, col_nao = st.columns(2)
 
                 with col_sim:
