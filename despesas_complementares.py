@@ -43,95 +43,94 @@ st.markdown("""
         font-weight: 600;
     }
 
-    /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA --- */
+    /* ======================================================= */
+    /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA (A CURA) --- */
+    /* ======================================================= */
     @media print {
-        /* Classe utilitária para esconder elementos de UI */
-        .no-print { display: none !important; height: 0 !important; margin: 0 !important; }
-
         @page {
             size: landscape;
             margin: 10mm;
         }
-        
-        /* 1. DESTRÓI O FLEXBOX VERTICAL DO STREAMLIT QUE CAUSA OS BURACOS GIGANTES */
-        /* Ao forçar o display: block, os elementos deixam de ser esticados para o fundo da página */
-        html, body, .stApp, main, [data-testid="stAppViewContainer"], [data-testid="block-container"] {
+
+        /* 1. ANIQUILAR O FLEXBOX VERTICAL E FORÇAR MODO BLOCO */
+        /* Isso impede que o Streamlit estique a página e crie buracos brancos */
+        html, body, #root, .stApp, main, 
+        [data-testid="stAppViewContainer"], 
+        [data-testid="block-container"], 
+        [data-testid="stVerticalBlock"],
+        [data-testid="stVerticalBlock"] > div,
+        .element-container {
             display: block !important; 
             height: auto !important;
             min-height: 0 !important;
             max-height: none !important;
-            overflow: visible !important;
-            padding: 0 !important;
-            margin: 0 !important;
+            flex: none !important; /* Desativa a expansão elástica */
+            padding-bottom: 0 !important;
+            margin-bottom: 0 !important;
             background-color: #FFFFFF !important;
         }
-        
-        /* 2. ANIQUILA OS CONTENTORES INVISÍVEIS (Elimina espaços fantasma) */
-        .element-container:has([data-testid="stDataEditor"]),
-        .element-container:has([data-testid="stDataFrame"]),
-        .element-container:has([data-testid="stTable"]),
-        .element-container:has([data-testid="stButton"]),
-        .element-container:has([data-testid="stDownloadButton"]),
-        .element-container:has(iframe) {
-            display: none !important;
-            height: 0 !important;
-            min-height: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            position: absolute !important;
-        }
 
-        /* 3. Esconde menus, cabeçalhos e rodapés padrão */
-        header, footer, [data-testid="stToolbar"], [data-testid="stManageApp"] { 
+        /* 2. REMOÇÃO ABSOLUTA DOS ELEMENTOS OCULTOS */
+        /* O position: absolute tira o elemento do fluxo, ocupando 0 pixels */
+        button, iframe, header, footer, 
+        [data-testid="stToolbar"], 
+        [data-testid="stManageApp"],
+        [data-testid="stDataEditor"], 
+        [data-testid="stDataFrame"], 
+        [data-testid="stTable"],
+        .no-print { 
             display: none !important; 
+            height: 0 !important; 
+            margin: 0 !important; 
+            padding: 0 !important; 
+            position: absolute !important; 
+            visibility: hidden !important;
         }
         
-        /* 4. Mantém elementos como as assinaturas lado a lado de forma segura */
+        /* 3. MANTER COLUNAS HORIZONTAIS (Para as Assinaturas e Cards não quebrarem) */
         [data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
             flex-wrap: nowrap !important;
+            align-items: center !important;
+            gap: 10px !important;
             page-break-inside: avoid !important;
             margin-bottom: 5px !important;
         }
+        [data-testid="stHorizontalBlock"] > div {
+            flex: 1 1 0% !important;
+            display: block !important;
+        }
 
-        /* Cores em preto puro para contraste */
+        /* Cores em preto puro para contraste na impressão */
         p, h1, h2, h3, h4, h5, h6, span, label { color: #000000 !important; }
         
-        /* Estiliza os cards de resumo para impressão */
-       .print-card {
-            background: #FFFFFF !important;
-            background-color: #FFFFFF !important;
-            border: 1px solid #000000 !important;
-            box-shadow: none !important;
-        }
-
-        .print-card * {
-            color: #000000 !important;
-        }
-
-        /* Mostra a tabela HTML personalizada e esconde o resto */
-        .print-only-table { display: block !important; }
-
-        /* Ajusta o título para nunca se separar da tabela e remove margens excessivas */
-        h3 {
-            page-break-after: avoid !important;
-            margin-top: 15px !important;
+        /* Ajuste dos cabeçalhos para ficarem compactos */
+        h1, h2, h3, h4 {
+            margin-top: 10px !important;
             margin-bottom: 5px !important;
             padding: 0 !important;
+            page-break-after: avoid !important;
         }
 
         hr {
             margin: 10px 0 !important;
             border-top: 1px solid #ccc !important;
         }
-
-        /* Reduz os espaçamentos das caixas de alerta (azul/amarela/verde) */
-        [data-testid="stAlert"] {
-            margin-top: 5px !important;
-            margin-bottom: 10px !important;
-            padding: 10px !important;
+        
+        /* Estiliza os cards de resumo para impressão */
+        .print-card {
+            background: #FFFFFF !important;
+            background-color: #FFFFFF !important;
+            border: 1px solid #000000 !important;
+            box-shadow: none !important;
         }
+        .print-card * {
+            color: #000000 !important;
+        }
+
+        /* Mostra a tabela HTML personalizada e esconde as do Streamlit */
+        .print-only-table { display: block !important; }
 
         /* MÁGICA DA TABELA HTML: Imprime perfeitamente e quebra nas linhas certas */
         .custom-table table, .custom-table th, .custom-table td {
@@ -142,13 +141,8 @@ st.markdown("""
             line-height: 1.1 !important;
         }
         
-        table { 
-            page-break-inside: auto !important; 
-        }
-        tr { 
-            page-break-inside: avoid !important; 
-            page-break-after: auto !important; 
-        }
+        table { page-break-inside: auto !important; }
+        tr { page-break-inside: avoid !important; page-break-after: auto !important; }
         thead { display: table-header-group !important; }
         tfoot { display: table-footer-group !important; }
 
