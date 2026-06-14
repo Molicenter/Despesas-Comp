@@ -22,10 +22,10 @@ st.markdown("""
     <style>
     [data-testid="collapsedControl"] {display: none;}
     
-    /* Oculta as tabelas espelho na tela normal (só aparecem na impressão) */
+    /* Oculta as tabelas espelho no ecrã normal (só aparecem na impressão) */
     .print-only-table { display: none; }
     
-    /* ESTILOS DA NOSSA NOVA TABELA NATIVA (Para a Tela) */
+    /* ESTILOS DA NOSSA NOVA TABELA NATIVA (Para o Ecrã) */
     .custom-table table {
         width: 100%;
         border-collapse: collapse;
@@ -91,9 +91,10 @@ st.markdown("""
             display: flex !important;
             flex-direction: row !important;
             flex-wrap: nowrap !important;
-            align-items: flex-end !important; /* Alinha os blocos por baixo para não cortar topos */
+            align-items: center !important; /* Alinhamento central para equilibrar o rodapé */
             gap: 15px !important;
             page-break-inside: avoid !important;
+            margin-top: 20px !important; /* Espaço de respiração antes do rodapé */
             margin-bottom: 5px !important;
             overflow: visible !important;
         }
@@ -103,16 +104,26 @@ st.markdown("""
             overflow: visible !important;
         }
 
-        /* 4. CORREÇÃO DAS IMAGENS (Evita o corte nas assinaturas) */
-        [data-testid="stImage"], 
-        [data-testid="stImage"] > div, 
-        [data-testid="stImage"] img,
-        [data-testid="column"] {
-            height: auto !important;
-            max-height: none !important;
-            overflow: visible !important; /* Destrava a guilhotina do Streamlit */
-            object-fit: contain !important;
+        /* 4. CORREÇÃO ABSOLUTA DAS IMAGENS (O Fim das Sobreposições) */
+        /* Neutraliza o hack de aspecto (padding+absolute) do Streamlit */
+        [data-testid="stImage"] {
             display: block !important;
+            height: auto !important;
+            overflow: visible !important;
+        }
+        [data-testid="stImage"] > div {
+            padding-bottom: 0 !important; /* Desliga o espaçamento elástico nulo */
+            height: auto !important;
+            position: relative !important;
+        }
+        [data-testid="stImage"] img {
+            position: relative !important; /* Remove o absolute para impedir que a imagem flutue */
+            display: block !important;
+            max-height: 110px !important; /* Limita a altura para garantir encaixe perfeito */
+            width: auto !important;
+            max-width: 100% !important;
+            margin: 0 auto !important; /* Centra a assinatura */
+            object-fit: contain !important;
         }
 
         /* Cores em preto puro para contraste na impressão */
@@ -131,7 +142,7 @@ st.markdown("""
             border-top: 1px solid #ccc !important;
         }
         
-        /* Estiliza os cards de resumo para impressão */
+        /* Estiliza os cartões de resumo para impressão */
         .print-card {
             background: #FFFFFF !important;
             background-color: #FFFFFF !important;
