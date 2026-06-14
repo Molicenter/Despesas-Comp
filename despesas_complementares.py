@@ -455,8 +455,24 @@ elif perfil in ["admin", "supervisor"]:
             df_pendentes.insert(0, 'Avaliação 📝', 'Pendente')
             df_edicao = df_pendentes.drop(columns=['Autorização Supervisor'])
             
+            # --- FUNÇÃO PARA COLORIR A COLUNA DE AVALIAÇÃO NA TABELA DE EDIÇÃO ---
+            def color_avaliacao(val):
+                if val == 'Aprovado':
+                    return 'color: #10b981; font-weight: bold;' # Verde
+                elif val == 'Reprovado':
+                    return 'color: #ef4444; font-weight: bold;' # Vermelho
+                elif val == 'Pendente':
+                    return 'color: #fbbf24; font-weight: bold;' # Dourado
+                return ''
+                
+            # Aplica as cores no DataFrame (tratando versões diferentes do Pandas)
+            try:
+                df_estilizado = df_edicao.style.map(color_avaliacao, subset=['Avaliação 📝'])
+            except AttributeError:
+                df_estilizado = df_edicao.style.applymap(color_avaliacao, subset=['Avaliação 📝'])
+            
             edited_df = st.data_editor(
-                df_edicao,
+                df_estilizado,
                 use_container_width=True,
                 hide_index=True,
                 column_config={
