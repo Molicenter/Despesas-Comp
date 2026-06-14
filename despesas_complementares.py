@@ -44,33 +44,27 @@ st.markdown("""
     }
 
     /* ======================================================= */
-    /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA (A CURA) --- */
+    /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA (A CURA DEFINITIVA) --- */
     /* ======================================================= */
     @media print {
         @page {
             size: landscape;
-            margin: 10mm;
+            margin: 15mm;
         }
 
-        /* 1. ANIQUILAR O FLEXBOX VERTICAL E FORÇAR MODO BLOCO */
+        /* 1. RESET ESTRUTURAL DA PÁGINA */
         html, body, #root, .stApp, main, 
         [data-testid="stAppViewContainer"], 
-        [data-testid="block-container"], 
-        [data-testid="stVerticalBlock"],
-        [data-testid="stVerticalBlock"] > div,
-        .element-container {
+        [data-testid="block-container"] {
             display: block !important; 
             height: auto !important;
             min-height: 0 !important;
             max-height: none !important;
-            flex: none !important; 
-            padding-bottom: 0 !important;
-            margin-bottom: 0 !important;
             background-color: #FFFFFF !important;
             overflow: visible !important;
         }
 
-        /* 2. REMOÇÃO ABSOLUTA DOS ELEMENTOS OCULTOS */
+        /* 2. REMOÇÃO DOS ELEMENTOS INDESEJADOS */
         button, iframe, header, footer, 
         [data-testid="stToolbar"], 
         [data-testid="stManageApp"],
@@ -79,100 +73,117 @@ st.markdown("""
         [data-testid="stTable"],
         .no-print { 
             display: none !important; 
-            height: 0 !important; 
-            margin: 0 !important; 
-            padding: 0 !important; 
-            position: absolute !important; 
-            visibility: hidden !important;
         }
-        
-        /* 3. MANTER COLUNAS HORIZONTAIS */
+
+        /* 3. DEVOLVER O ESPAÇO RESPIRATÓRIO AOS BLOCOS (EVITA SOBREPOSIÇÃO) */
+        [data-testid="stVerticalBlock"], 
+        .element-container {
+            display: block !important;
+            position: relative !important;
+            height: auto !important;
+            margin-bottom: 15px !important; /* Este é o segredo para não encavalar */
+            overflow: visible !important;
+        }
+
+        /* 4. REGRAS DE PROTEÇÃO PARA AS CAIXAS AZUIS/VERDES (st.info / st.success) */
+        [data-testid="stAlert"] {
+            display: block !important;
+            position: relative !important;
+            height: auto !important;
+            min-height: 40px !important;
+            margin-top: 10px !important;
+            margin-bottom: 15px !important;
+            padding: 10px !important;
+            page-break-inside: avoid !important;
+        }
+
+        /* 5. ORGANIZAÇÃO DO RODAPÉ E ASSINATURAS */
         [data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
-            flex-wrap: nowrap !important;
-            align-items: center !important; /* Alinhamento central para equilibrar o rodapé */
-            gap: 15px !important;
+            align-items: center !important;
+            gap: 20px !important;
             page-break-inside: avoid !important;
-            margin-top: 20px !important; /* Espaço de respiração antes do rodapé */
-            margin-bottom: 5px !important;
-            overflow: visible !important;
+            margin-top: 30px !important;
+            margin-bottom: 10px !important;
         }
         [data-testid="stHorizontalBlock"] > div {
-            flex: 1 1 0% !important;
+            flex: 1 !important;
             display: block !important;
-            overflow: visible !important;
         }
 
-        /* 4. CORREÇÃO ABSOLUTA DAS IMAGENS (O Fim das Sobreposições) */
-        /* Neutraliza o hack de aspecto (padding+absolute) do Streamlit */
-        [data-testid="stImage"] {
+        /* 6. PROTEÇÃO E DIMENSIONAMENTO DE IMAGENS */
+        [data-testid="stImage"], [data-testid="stImage"] > div {
             display: block !important;
-            height: auto !important;
-            overflow: visible !important;
-        }
-        [data-testid="stImage"] > div {
-            padding-bottom: 0 !important; /* Desliga o espaçamento elástico nulo */
             height: auto !important;
             position: relative !important;
+            padding-bottom: 0 !important; 
         }
         [data-testid="stImage"] img {
-            position: relative !important; /* Remove o absolute para impedir que a imagem flutue */
-            display: block !important;
-            max-height: 110px !important; /* Limita a altura para garantir encaixe perfeito */
+            max-height: 90px !important; /* Segura o tamanho da assinatura */
             width: auto !important;
-            max-width: 100% !important;
-            margin: 0 auto !important; /* Centra a assinatura */
-            object-fit: contain !important;
+            margin: 0 auto !important;
+            display: block !important;
+            position: relative !important;
         }
 
-        /* Cores em preto puro para contraste na impressão */
-        p, h1, h2, h3, h4, h5, h6, span, label { color: #000000 !important; }
+        /* 7. TEXTOS E TÍTULOS */
+        p, span, label { color: #000000 !important; }
         
-        /* Ajuste dos cabeçalhos para ficarem compactos */
-        h1, h2, h3, h4 {
-            margin-top: 10px !important;
-            margin-bottom: 5px !important;
+        h1, h2, h3, h4, h5 {
+            color: #000000 !important;
+            margin-top: 20px !important;
+            margin-bottom: 10px !important;
             padding: 0 !important;
             page-break-after: avoid !important;
+            position: relative !important;
+            display: block !important;
         }
 
         hr {
-            margin: 10px 0 !important;
+            margin: 15px 0 !important;
             border-top: 1px solid #ccc !important;
         }
         
-        /* Estiliza os cartões de resumo para impressão */
-        .print-card {
-            background: #FFFFFF !important;
-            background-color: #FFFFFF !important;
-            border: 1px solid #000000 !important;
-            box-shadow: none !important;
-        }
-        .print-card * {
-            color: #000000 !important;
+        /* 8. TABELAS (Apenas as HTML personalizadas aparecem) */
+        .print-only-table { 
+            display: block !important; 
+            margin-bottom: 20px !important; 
         }
 
-        /* Mostra a tabela HTML personalizada e esconde as do Streamlit */
-        .print-only-table { display: block !important; }
-
-        /* MÁGICA DA TABELA HTML: Imprime perfeitamente e quebra nas linhas certas */
-        .custom-table table, .custom-table th, .custom-table td {
+        .custom-table table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin-bottom: 20px !important;
+        }
+        
+        .custom-table th, .custom-table td {
             color: #000000 !important;
             border-bottom: 1px solid #999999 !important;
-            font-size: 10px !important;
-            padding: 3px 4px !important;
-            line-height: 1.1 !important;
+            font-size: 11px !important;
+            padding: 4px 6px !important;
+            line-height: 1.2 !important;
         }
         
         table { page-break-inside: auto !important; }
         tr { page-break-inside: avoid !important; page-break-after: auto !important; }
         thead { display: table-header-group !important; }
-        tfoot { display: table-footer-group !important; }
 
+        /* Força a impressora a pintar cores de fundo (caixas de info, etc) */
         * {
-            -webkit-print-color-adjust: ext !important;
+            -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+        }
+        
+        /* Estiliza os cartões de resumo para impressão */
+        .print-card {
+            background: #FFFFFF !important;
+            border: 1px solid #000000 !important;
+            box-shadow: none !important;
+            margin-bottom: 10px !important;
+        }
+        .print-card * {
+            color: #000000 !important;
         }
     }
     </style>
@@ -323,7 +334,7 @@ with col_title:
 with col_info:
     st.markdown(f"<div style='text-align: right; margin-top: 5px; color: #cbd5e1; font-size: 14px;'><b>Usuário:</b> {st.session_state['usuario']}<br><b>Nível:</b> {perfil.upper()}</div>", unsafe_allow_html=True)
 with col_btn:
-    st.markdown("<div style='margin-top: 5px;'>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top: 5px;' class='no-print'>", unsafe_allow_html=True)
     if st.button("🚪 Sair", use_container_width=True):
         st.session_state.clear() 
         st.rerun()
