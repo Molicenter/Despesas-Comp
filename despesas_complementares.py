@@ -228,7 +228,6 @@ if not st.session_state["logado_despesas"]:
             
             lista_usuarios = ["Selecione..."] + list(USUARIOS_DB.keys())
             user_input = st.selectbox("👤 Usuário de acesso:", lista_usuarios)
-           # Trocamos o 'current-password' por 'new-password'
             pass_input = st.text_input("🔑 Senha de acesso:", type="password", placeholder="••••••••", autocomplete="new-password")
             
             if st.button("Entrar no Sistema", use_container_width=True):
@@ -411,7 +410,6 @@ if perfil == "loja":
     else:
         st.info("O banco de dados ainda está vazio.")
 
-
 # --- VISÃO GERENCIAL / SUPERVISOR ---
 elif perfil in ["admin", "supervisor"]:
     st.success("🌐 Visão Consolidada - Painel de Aprovação")
@@ -431,7 +429,7 @@ elif perfil in ["admin", "supervisor"]:
             
         col1, col2, col3, col4 = st.columns(4)
         
-       def card_metrica(coluna, titulo, qtd, valor, cor_valor):
+        def card_metrica(coluna, titulo, qtd, valor, cor_valor):
             coluna.markdown(f"""
             <div class='print-card' style='background-color:#1e293b; padding:10px 5px; border-radius:6px; border:1px solid #334155; text-align:center;'>
                 <p style='margin:0; font-size:14px; color:#cbd5e1;'>{titulo}</p>
@@ -600,7 +598,6 @@ elif perfil in ["admin", "supervisor"]:
                 st.image("Adriano.png", use_container_width=True)
             else:
                 st.markdown("<br>", unsafe_allow_html=True)
-
 
         # =========================================================
         # BOTÕES DE EXPORTAR, IMPRIMIR E LIMPAR
