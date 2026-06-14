@@ -609,19 +609,29 @@ elif perfil in ["admin", "supervisor"]:
         col_export, col_print, col_clear = st.columns([1, 1, 1])
 
         # --- 1. Botão Exportar Excel ---
-        buffer = io.BytesIO()
-        with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-            df_view.to_excel(writer, index=False, sheet_name='Histórico')
-
         with col_export:
-            st.download_button(
-                label="📊 Exportar Histórico (Excel)",
-                data=buffer.getvalue(),
-                file_name=f"historico_despesas_{datetime.now().strftime('%d%m%Y')}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True,
-                type="primary"
-            )
+            # Proteção: Só tenta gerar o Excel se a variável df_view existir no momento
+            if 'df_view' in locals() and not df_view.empty:
+                buffer = io.BytesIO()
+                with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+                    df_view.to_excel(writer, index=False, sheet_name='Histórico')
+
+                st.download_button(
+                    label="📊 Exportar Histórico (Excel)",
+                    data=buffer.getvalue(),
+                    file_name=f"historico_despesas_{datetime.now().strftime('%d%m%Y')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True,
+                    type="primary"
+                )
+            else:
+                # Se não tiver dados, mostra o botão desabilitado para não quebrar o layout
+                st.button(
+                    label="📊 Exportar Histórico (Excel)",
+                    disabled=True,
+                    use_container_width=True,
+                    help="Não há dados no histórico para exportar."
+                )
 
         # --- 2. Botão Imprimir Tela ---
         with col_print:
