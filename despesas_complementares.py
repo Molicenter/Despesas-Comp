@@ -44,15 +44,15 @@ st.markdown("""
     }
 
     /* ======================================================= */
-    /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA (AJUSTE FINO) --- */
+    /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA --- */
     /* ======================================================= */
     @media print {
         @page {
             size: landscape;
-            margin: 10mm;
+            margin: 15mm;
         }
 
-        /* 1. RESET ESTRUTURAL DA PÁGINA */
+        /* 1. RESET ESTRUTURAL E OCULTAÇÃO DO SISTEMA */
         html, body, #root, .stApp, main, 
         [data-testid="stAppViewContainer"], 
         [data-testid="block-container"] {
@@ -60,9 +60,9 @@ st.markdown("""
             height: auto !important;
             background-color: #FFFFFF !important;
             padding: 0 !important;
+            overflow: visible !important;
         }
 
-        /* 2. REMOVER ELEMENTOS DA TELA E CÓDIGO NATIVO */
         button, iframe, header, footer, 
         [data-testid="stToolbar"], 
         [data-testid="stManageApp"],
@@ -71,61 +71,55 @@ st.markdown("""
         [data-testid="stTable"],
         .no-print { 
             display: none !important; 
-            height: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            position: absolute !important;
         }
 
-        /* 3. O SEGREDO DO ESPAÇAMENTO PERFEITO */
-        /* Retira o espaçamento automático das colunas do Streamlit */
+        /* 2. RECUPERAR O ESPAÇAMENTO NATURAL (Evita as sobreposições) */
         [data-testid="stVerticalBlock"] {
             display: block !important;
             gap: 0 !important; 
         }
         
-        /* Zera as margens das caixas invisíveis para evitar o "efeito multiplicador" */
         .element-container {
             display: block !important;
             position: relative !important;
-            margin: 0 !important;
+            margin-bottom: 12px !important; /* Dá espaço para os títulos respirarem */
             padding: 0 !important;
         }
 
-        /* 4. APLICAR MARGEM APENAS NOS ELEMENTOS REAIS (Textos e Títulos) */
+        /* 3. TÍTULOS E LINHAS */
         h1, h2, h3, h4, h5 {
             color: #000000 !important;
-            margin: 5px 0 !important; /* Margem compacta */
+            margin: 10px 0 5px 0 !important;
             padding: 0 !important;
             page-break-after: avoid !important;
         }
         
         hr {
-            margin: 5px 0 !important;
+            margin: 10px 0 !important;
             border-top: 1px solid #ccc !important;
         }
 
         [data-testid="stAlert"] {
-            margin: 5px 0 !important;
-            padding: 5px 10px !important;
+            display: block !important;
+            margin: 10px 0 !important;
+            padding: 10px !important;
         }
 
-        /* 5. ALINHAMENTO DAS COLUNAS (Cards e Assinaturas) */
+        /* 4. BLOCOS LATERAIS (Assinaturas e Resumo) */
         [data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
             align-items: center !important;
-            gap: 10px !important;
-            margin: 5px 0 !important;
+            gap: 15px !important;
+            margin-top: 15px !important;
             page-break-inside: avoid !important;
         }
         [data-testid="column"] {
             display: block !important;
-            flex: 1 1 0% !important; /* Garante que as colunas dividam o espaço por igual */
-            width: auto !important;
+            flex: 1 1 0% !important; 
         }
 
-        /* 6. ESTILO DOS CARDS DE RESUMO */
+        /* 5. CARTÕES DE NÚMEROS (Totais) */
         .print-card {
             background: #FFFFFF !important;
             border: 1px solid #000000 !important;
@@ -138,19 +132,19 @@ st.markdown("""
             margin: 2px 0 !important;
         }
 
-        /* 7. TABELAS DE IMPRESSÃO */
+        /* 6. TABELAS PERFEITAS NA IMPRESSÃO */
         .print-only-table { 
             display: block !important; 
-            margin: 5px 0 10px 0 !important; 
+            margin-bottom: 15px !important; 
         }
         .custom-table table {
-            margin-bottom: 5px !important;
+            margin-bottom: 10px !important;
         }
         .custom-table th, .custom-table td {
             color: #000000 !important;
             border-bottom: 1px solid #999999 !important;
             font-size: 10px !important;
-            padding: 3px 4px !important;
+            padding: 4px 5px !important;
             line-height: 1.1 !important;
         }
         
@@ -158,15 +152,14 @@ st.markdown("""
         tr { page-break-inside: avoid !important; page-break-after: auto !important; }
         thead { display: table-header-group !important; }
 
-        /* 8. PROTEÇÃO DAS IMAGENS/ASSINATURAS */
-        [data-testid="stImage"], [data-testid="stImage"] > div {
+        /* 7. IMAGENS DAS ASSINATURAS */
+        [data-testid="stImage"] {
             display: block !important;
             height: auto !important;
-            padding: 0 !important; 
             margin: 0 !important;
         }
         [data-testid="stImage"] img {
-            max-height: 80px !important; /* Tamanho seguro para não empurrar a página */
+            max-height: 80px !important; 
             width: auto !important;
             margin: 0 auto !important;
             display: block !important;
@@ -288,6 +281,14 @@ if not st.session_state["logado_despesas"]:
 # =========================================================
 # 3. FUNÇÕES DE DADOS E CABEÇALHO SUPERIOR
 # =========================================================
+
+# Função de Apoio para Formatar Dinheiro (Evitar as várias casas decimais)
+def formata_br(valor):
+    try:
+        return f"R$ {float(valor):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    except:
+        return valor
+
 @st.cache_data(ttl=5)
 def carregar_dados():
     try:
@@ -401,11 +402,15 @@ if perfil == "loja":
             with col_tabela:
                 st.dataframe(df_loja, use_container_width=True, hide_index=True)
                 
-                # --- TABELA FANTASMA PARA IMPRESSÃO (Visão Loja) ---
+                # --- TABELA FANTASMA PARA IMPRESSÃO (Visão Loja) - FORMATADA ---
+                df_loja_print = df_loja.copy()
+                if 'Valor' in df_loja_print.columns:
+                    df_loja_print['Valor'] = df_loja_print['Valor'].apply(formata_br)
+                
                 try:
-                    html_loja = df_loja.style.hide(axis="index").to_html()
+                    html_loja = df_loja_print.style.hide(axis="index").to_html()
                 except:
-                    html_loja = df_loja.style.hide_index().to_html()
+                    html_loja = df_loja_print.style.hide_index().to_html()
                 st.markdown(f'<div class="print-only-table custom-table">{html_loja}</div>', unsafe_allow_html=True)
             
             with col_delete:
@@ -507,7 +512,6 @@ elif perfil in ["admin", "supervisor"]:
 
             st.markdown("<br class='no-print'>", unsafe_allow_html=True)
             
-            # Botões curtos e diretos
             col_all1, col_all2, col_all3, espaco_vazio = st.columns([1.2, 1.2, 1.2, 6])
             
             with col_all1:
@@ -525,7 +529,6 @@ elif perfil in ["admin", "supervisor"]:
 
             st.markdown("<br class='no-print'>", unsafe_allow_html=True)
 
-            # Insere a coluna com o valor default armazenado no session_state
             df_pendentes.insert(0, 'Avaliação 📝', st.session_state["status_lote_padrao"])
             df_edicao = df_pendentes.drop(columns=['Autorização Supervisor'])
             
@@ -555,11 +558,15 @@ elif perfil in ["admin", "supervisor"]:
                 }
             )
             
-            # --- TABELA FANTASMA PARA IMPRESSÃO (Visão Gerencial Pendentes) ---
+            # --- TABELA FANTASMA PARA IMPRESSÃO (Pendentes) - FORMATADA ---
+            df_edicao_print = df_edicao.copy()
+            if 'Valor' in df_edicao_print.columns:
+                df_edicao_print['Valor'] = df_edicao_print['Valor'].apply(formata_br)
+                
             try:
-                html_pendentes = df_edicao.style.hide(axis="index").to_html()
+                html_pendentes = df_edicao_print.style.hide(axis="index").to_html()
             except:
-                html_pendentes = df_edicao.style.hide_index().to_html()
+                html_pendentes = df_edicao_print.style.hide_index().to_html()
             st.markdown(f'<div class="print-only-table custom-table">{html_pendentes}</div>', unsafe_allow_html=True)
             
             st.markdown("<br class='no-print'>", unsafe_allow_html=True)
@@ -603,9 +610,7 @@ elif perfil in ["admin", "supervisor"]:
                         if sucesso_geral:
                             st.success("✅ Avaliações salvas com sucesso!")
                             st.cache_data.clear()
-                            
                             st.session_state["status_lote_padrao"] = "🟡 Pendente"
-                            
                             time.sleep(1.5)
                             st.rerun()
 
@@ -623,9 +628,8 @@ elif perfil in ["admin", "supervisor"]:
             ).reset_index(drop=True)
 
             df_view = df_historico.copy()
-            df_view['Valor'] = df_view['Valor'].apply(
-                lambda x: f"R$ {float(x):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-            )
+            # Esta tabela já aplicava o limite de casas decimais
+            df_view['Valor'] = df_view['Valor'].apply(formata_br)
 
             df_tela = df_view.copy()
             if 'Carimbo de Data/Hora' in df_tela.columns:
@@ -670,7 +674,8 @@ elif perfil in ["admin", "supervisor"]:
                     Total_RS=('Valor', 'sum')
                 ).reset_index()
                 
-                resumo_lojas['Total_RS'] = resumo_lojas['Total_RS'].apply(lambda x: f"R$ {x:,.2f}")
+                # Aplica a formatação oficial com 2 casas
+                resumo_lojas['Total_RS'] = resumo_lojas['Total_RS'].apply(formata_br)
                 resumo_lojas.rename(columns={'Loja': 'Loja', 'Qtde': 'Qtde', 'Total_RS': 'R$'}, inplace=True)
                 
                 _, col_tabela_centro, _ = st.columns([1, 2, 1])
