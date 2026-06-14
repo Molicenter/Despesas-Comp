@@ -434,9 +434,9 @@ elif perfil in ["admin", "supervisor"]:
         def card_metrica(coluna, titulo, qtd, valor, cor_valor):
             coluna.markdown(f"""
             <div class='print-card' style='background-color:#1e293b; padding:5px; border-radius:4px; border:1px solid #334155; text-align:center;'>
-                <p style='margin:0; font-size:10px; color:#cbd5e1;'>{titulo}</p>
+                <p style='margin:0; font-size:12px; color:#cbd5e1;'>{titulo}</p>
                 <h4 style='margin:0; color:#ffffff;'>{qtd}</h4>
-                <p style='margin:0; font-size:11px; color:{cor_valor}; font-weight:bold;'>R$ {valor:,.2f}</p>
+                <p style='margin:0; font-size:14px; color:{cor_valor}; font-weight:bold;'>R$ {valor:,.2f}</p>
             </div>
             """.replace(",", "X").replace(".", ",").replace("X", "."), unsafe_allow_html=True)
 
