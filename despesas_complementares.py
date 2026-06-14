@@ -452,27 +452,12 @@ elif perfil in ["admin", "supervisor"]:
         else:
             st.markdown("<span style='font-size:14px; color:#cbd5e1;'>Dê <b>dois cliques</b> na coluna <b>Avaliação 📝</b> para alterar o status. Ao finalizar suas escolhas, clique no botão vermelho de salvar no final da página.</span>", unsafe_allow_html=True)
             
-            df_pendentes.insert(0, 'Avaliação 📝', 'Pendente')
+            # --- SOLUÇÃO DE CORES: Usando Emojis como indicadores visuais ---
+            df_pendentes.insert(0, 'Avaliação 📝', '🟡 Pendente')
             df_edicao = df_pendentes.drop(columns=['Autorização Supervisor'])
             
-            # --- FUNÇÃO PARA COLORIR A COLUNA DE AVALIAÇÃO NA TABELA DE EDIÇÃO ---
-            def color_avaliacao(val):
-                if val == 'Aprovado':
-                    return 'color: #10b981; font-weight: bold;' # Verde
-                elif val == 'Reprovado':
-                    return 'color: #ef4444; font-weight: bold;' # Vermelho
-                elif val == 'Pendente':
-                    return 'color: #fbbf24; font-weight: bold;' # Dourado
-                return ''
-                
-            # Aplica as cores no DataFrame (tratando versões diferentes do Pandas)
-            try:
-                df_estilizado = df_edicao.style.map(color_avaliacao, subset=['Avaliação 📝'])
-            except AttributeError:
-                df_estilizado = df_edicao.style.applymap(color_avaliacao, subset=['Avaliação 📝'])
-            
             edited_df = st.data_editor(
-                df_estilizado,
+                df_edicao,
                 use_container_width=True,
                 hide_index=True,
                 column_config={
@@ -480,7 +465,7 @@ elif perfil in ["admin", "supervisor"]:
                         "Avaliação 📝",
                         help="Clique duas vezes para aprovar ou reprovar",
                         width="medium",
-                        options=["Pendente", "Aprovado", "Reprovado"],
+                        options=["🟡 Pendente", "🟢 Aprovado", "🔴 Reprovado"],
                         required=True,
                     ),
                     "Carimbo de Data/Hora": st.column_config.Column(disabled=True),
@@ -497,19 +482,28 @@ elif perfil in ["admin", "supervisor"]:
             st.markdown("<br>", unsafe_allow_html=True)
             
             if st.button("💾 Salvar Alterações no Sistema", type="primary"):
-                mudancas = edited_df[edited_df['Avaliação 📝'] != 'Pendente']
+                mudancas = edited_df[edited_df['Avaliação 📝'] != '🟡 Pendente']
                 
                 if mudancas.empty:
-                    st.warning("⚠️ Nenhuma avaliação foi alterada. Mude o status para 'Aprovado' ou 'Reprovado' na tabela antes de salvar.")
+                    st.warning("⚠️ Nenhuma avaliação foi alterada. Mude o status na tabela antes de salvar.")
                 else:
                     with st.spinner(f"⏳ Processando e salvando {len(mudancas)} avaliações de uma vez..."):
                         lista_atualizacoes = []
                         for idx, row in mudancas.iterrows():
+                            # Limpando o Emoji antes de salvar no Google Sheets para não sujar o banco
+                            status_selecionado = row['Avaliação 📝']
+                            if "Aprovado" in status_selecionado:
+                                status_limpo = "Aprovado"
+                            elif "Reprovado" in status_selecionado:
+                                status_limpo = "Reprovado"
+                            else:
+                                status_limpo = "Pendente"
+                                
                             lista_atualizacoes.append({
                                 "Loja": row['Loja'],
                                 "Nome": row['Nome Completo'],
                                 "Valor": float(row['Valor']),
-                                "NovoStatus": row['Avaliação 📝']
+                                "NovoStatus": status_limpo
                             })
                             
                         payload = {
@@ -554,6 +548,7 @@ elif perfil in ["admin", "supervisor"]:
 
             df_tela.rename(columns={'Autorização Supervisor': 'Status'}, inplace=True)
 
+            # Aqui a cor via CSS funciona perfeitamente pois é HTML puro (não editável)
             def highlight_status(val):
                 if val == 'Aprovado':
                     return 'color: #10b981; font-weight: bold;'
