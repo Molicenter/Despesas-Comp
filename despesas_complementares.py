@@ -44,12 +44,12 @@ st.markdown("""
     }
 
     /* ======================================================= */
-    /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA (A CURA DEFINITIVA) --- */
+    /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA (AJUSTE FINO) --- */
     /* ======================================================= */
     @media print {
         @page {
             size: landscape;
-            margin: 15mm;
+            margin: 10mm;
         }
 
         /* 1. RESET ESTRUTURAL DA PÁGINA */
@@ -58,13 +58,11 @@ st.markdown("""
         [data-testid="block-container"] {
             display: block !important; 
             height: auto !important;
-            min-height: 0 !important;
-            max-height: none !important;
             background-color: #FFFFFF !important;
-            overflow: visible !important;
+            padding: 0 !important;
         }
 
-        /* 2. REMOÇÃO DOS ELEMENTOS INDESEJADOS */
+        /* 2. REMOVER ELEMENTOS DA TELA E CÓDIGO NATIVO */
         button, iframe, header, footer, 
         [data-testid="stToolbar"], 
         [data-testid="stManageApp"],
@@ -73,117 +71,110 @@ st.markdown("""
         [data-testid="stTable"],
         .no-print { 
             display: none !important; 
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            position: absolute !important;
         }
 
-        /* 3. DEVOLVER O ESPAÇO RESPIRATÓRIO AOS BLOCOS (EVITA SOBREPOSIÇÃO) */
-        [data-testid="stVerticalBlock"], 
+        /* 3. O SEGREDO DO ESPAÇAMENTO PERFEITO */
+        /* Retira o espaçamento automático das colunas do Streamlit */
+        [data-testid="stVerticalBlock"] {
+            display: block !important;
+            gap: 0 !important; 
+        }
+        
+        /* Zera as margens das caixas invisíveis para evitar o "efeito multiplicador" */
         .element-container {
             display: block !important;
             position: relative !important;
-            height: auto !important;
-            margin-bottom: 15px !important; /* Este é o segredo para não encavalar */
-            overflow: visible !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
 
-        /* 4. REGRAS DE PROTEÇÃO PARA AS CAIXAS AZUIS/VERDES (st.info / st.success) */
+        /* 4. APLICAR MARGEM APENAS NOS ELEMENTOS REAIS (Textos e Títulos) */
+        h1, h2, h3, h4, h5 {
+            color: #000000 !important;
+            margin: 5px 0 !important; /* Margem compacta */
+            padding: 0 !important;
+            page-break-after: avoid !important;
+        }
+        
+        hr {
+            margin: 5px 0 !important;
+            border-top: 1px solid #ccc !important;
+        }
+
         [data-testid="stAlert"] {
-            display: block !important;
-            position: relative !important;
-            height: auto !important;
-            min-height: 40px !important;
-            margin-top: 10px !important;
-            margin-bottom: 15px !important;
-            padding: 10px !important;
-            page-break-inside: avoid !important;
+            margin: 5px 0 !important;
+            padding: 5px 10px !important;
         }
 
-        /* 5. ORGANIZAÇÃO DO RODAPÉ E ASSINATURAS */
+        /* 5. ALINHAMENTO DAS COLUNAS (Cards e Assinaturas) */
         [data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
             align-items: center !important;
-            gap: 20px !important;
+            gap: 10px !important;
+            margin: 5px 0 !important;
             page-break-inside: avoid !important;
-            margin-top: 30px !important;
-            margin-bottom: 10px !important;
         }
-        [data-testid="stHorizontalBlock"] > div {
-            flex: 1 !important;
+        [data-testid="column"] {
             display: block !important;
-        }
-
-        /* 6. PROTEÇÃO E DIMENSIONAMENTO DE IMAGENS */
-        [data-testid="stImage"], [data-testid="stImage"] > div {
-            display: block !important;
-            height: auto !important;
-            position: relative !important;
-            padding-bottom: 0 !important; 
-        }
-        [data-testid="stImage"] img {
-            max-height: 90px !important; /* Segura o tamanho da assinatura */
+            flex: 1 1 0% !important; /* Garante que as colunas dividam o espaço por igual */
             width: auto !important;
-            margin: 0 auto !important;
-            display: block !important;
-            position: relative !important;
         }
 
-        /* 7. TEXTOS E TÍTULOS */
-        p, span, label { color: #000000 !important; }
-        
-        h1, h2, h3, h4, h5 {
+        /* 6. ESTILO DOS CARDS DE RESUMO */
+        .print-card {
+            background: #FFFFFF !important;
+            border: 1px solid #000000 !important;
+            box-shadow: none !important;
+            margin: 0 !important;
+            padding: 5px !important;
+        }
+        .print-card * {
             color: #000000 !important;
-            margin-top: 20px !important;
-            margin-bottom: 10px !important;
-            padding: 0 !important;
-            page-break-after: avoid !important;
-            position: relative !important;
-            display: block !important;
+            margin: 2px 0 !important;
         }
 
-        hr {
-            margin: 15px 0 !important;
-            border-top: 1px solid #ccc !important;
-        }
-        
-        /* 8. TABELAS (Apenas as HTML personalizadas aparecem) */
+        /* 7. TABELAS DE IMPRESSÃO */
         .print-only-table { 
             display: block !important; 
-            margin-bottom: 20px !important; 
+            margin: 5px 0 10px 0 !important; 
         }
-
         .custom-table table {
-            width: 100% !important;
-            border-collapse: collapse !important;
-            margin-bottom: 20px !important;
+            margin-bottom: 5px !important;
         }
-        
         .custom-table th, .custom-table td {
             color: #000000 !important;
             border-bottom: 1px solid #999999 !important;
-            font-size: 11px !important;
-            padding: 4px 6px !important;
-            line-height: 1.2 !important;
+            font-size: 10px !important;
+            padding: 3px 4px !important;
+            line-height: 1.1 !important;
         }
         
         table { page-break-inside: auto !important; }
         tr { page-break-inside: avoid !important; page-break-after: auto !important; }
         thead { display: table-header-group !important; }
 
-        /* Força a impressora a pintar cores de fundo (caixas de info, etc) */
+        /* 8. PROTEÇÃO DAS IMAGENS/ASSINATURAS */
+        [data-testid="stImage"], [data-testid="stImage"] > div {
+            display: block !important;
+            height: auto !important;
+            padding: 0 !important; 
+            margin: 0 !important;
+        }
+        [data-testid="stImage"] img {
+            max-height: 80px !important; /* Tamanho seguro para não empurrar a página */
+            width: auto !important;
+            margin: 0 auto !important;
+            display: block !important;
+        }
+
         * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
-        }
-        
-        /* Estiliza os cartões de resumo para impressão */
-        .print-card {
-            background: #FFFFFF !important;
-            border: 1px solid #000000 !important;
-            box-shadow: none !important;
-            margin-bottom: 10px !important;
-        }
-        .print-card * {
-            color: #000000 !important;
         }
     }
     </style>
@@ -277,7 +268,6 @@ if not st.session_state["logado_despesas"]:
             lista_usuarios = ["Selecione..."] + list(USUARIOS_DB.keys())
             user_input = st.selectbox("👤 Usuário de acesso:", lista_usuarios)
             
-            # Autocomplete off para ignorar sugestões
             pass_input = st.text_input("🔑 Senha de acesso:", type="password", placeholder="••••••••", autocomplete="off")
             
             if st.button("Entrar no Sistema", use_container_width=True):
@@ -310,7 +300,6 @@ def carregar_dados():
                 df['Data Trabalhada'] = df['Data Trabalhada'].fillna("-")
                 
             if 'Carimbo de Data/Hora' in df.columns:
-                # Correção do fuso horário UTC para UTC-3 (Brasil)
                 dt_series = pd.to_datetime(df['Carimbo de Data/Hora'], errors='coerce')
                 dt_series = dt_series - pd.Timedelta(hours=3) # Subtrai 3 horas
                 
