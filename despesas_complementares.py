@@ -461,40 +461,14 @@ elif perfil in ["admin", "supervisor"]:
         if df_pendentes.empty:
             st.info("✨ Maravilha! Não há despesas pendentes de aprovação no momento.")
         else:
-            st.markdown("<span style='font-size:14px; color:#cbd5e1;'>Dê <b>dois cliques</b> na coluna <b>Avaliação 📝</b> para alterar o status, ou use os botões abaixo para marcação em lote. Ao finalizar, clique em salvar no final da página.</span>", unsafe_allow_html=True)
+            st.markdown("<span style='font-size:14px; color:#cbd5e1;'>Dê <b>dois cliques</b> na coluna <b>Avaliação 📝</b> para alterar o status. Ao finalizar suas escolhas, clique no botão vermelho de salvar no final da página.</span>", unsafe_allow_html=True)
             
-            # --- AJUSTE SOLICITADO: LÓGICA DE SELECIONAR TODOS EM LOTE ---
-            if "status_lote_padrao" not in st.session_state:
-                st.session_state["status_lote_padrao"] = "🟡 Pendente"
-
-            st.markdown("<br>", unsafe_allow_html=True)
-            col_all1, col_all2, col_all3 = st.columns(3)
-            
-            with col_all1:
-                if st.button("<b>🟢 Aprovar Todos</b>", use_container_width=True, type="secondary"):
-                    st.session_state["status_lote_padrao"] = "🟢 Aprovado"
-                    st.rerun()
-            with col_all2:
-                if st.button("<b>🔴 Reprovar Todos</b>", use_container_width=True, type="secondary"):
-                    st.session_state["status_lote_padrao"] = "🔴 Reprovado"
-                    st.rerun()
-            with col_all3:
-                if st.button("<b>🔄 Voltar para Pendentes</b>", use_container_width=True, type="secondary"):
-                    st.session_state["status_lote_padrao"] = "🟡 Pendente"
-                    st.rerun()
-            st.markdown("<br>", unsafe_allow_html=True)
-            # --- FIM DA LÓGICA DE SELECIONAR TODOS ---
-
-            # Insere a coluna com o valor default armazenado no session_state
-            df_pendentes.insert(0, 'Avaliação 📝', st.session_state["status_lote_padrao"])
+            # --- SOLUÇÃO DE CORES: Usando Emojis como indicadores visuais ---
+            df_pendentes.insert(0, 'Avaliação 📝', '🟡 Pendente')
             df_edicao = df_pendentes.drop(columns=['Autorização Supervisor'])
             
-            # Chave dinâmica para forçar o Streamlit a redesenhar a tabela quando o lote mudar
-            chave_editor = f"editor_lote_{st.session_state['status_lote_padrao']}"
-
             edited_df = st.data_editor(
                 df_edicao,
-                key=chave_editor,
                 use_container_width=True,
                 hide_index=True,
                 column_config={
@@ -534,7 +508,7 @@ elif perfil in ["admin", "supervisor"]:
                     with st.spinner(f"⏳ Processando e salvando {len(mudancas)} avaliações de uma vez..."):
                         lista_atualizacoes = []
                         for idx, row in mudancas.iterrows():
-                            # Limpando o Emoji antes de salvar no Google Sheets
+                            # Limpando o Emoji antes de salvar no Google Sheets para não sujar o banco
                             status_selecionado = row['Avaliação 📝']
                             if "Aprovado" in status_selecionado:
                                 status_limpo = "Aprovado"
@@ -565,10 +539,6 @@ elif perfil in ["admin", "supervisor"]:
                         if sucesso_geral:
                             st.success("✅ Avaliações salvas com sucesso!")
                             st.cache_data.clear()
-                            
-                            # Limpa a variável de lote para voltar a vir em branco na próxima vez
-                            st.session_state["status_lote_padrao"] = "🟡 Pendente"
-                            
                             time.sleep(1.5)
                             st.rerun()
 
