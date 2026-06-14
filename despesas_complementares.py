@@ -210,7 +210,7 @@ if not st.session_state["logado_despesas"]:
     """, unsafe_allow_html=True)
 
     st.markdown("<br><br>", unsafe_allow_html=True)
-    _, col_centro, _ = st.columns([1, 1.5, 1])
+    _, col_centro, _ = st.columns([1, 1, 1])
     
     with col_centro:
         with st.container(border=True):
@@ -228,7 +228,8 @@ if not st.session_state["logado_despesas"]:
             
             lista_usuarios = ["Selecione..."] + list(USUARIOS_DB.keys())
             user_input = st.selectbox("👤 Usuário de acesso:", lista_usuarios)
-            pass_input = st.text_input("🔑 Senha de acesso:", type="password", placeholder="••••••••", autocomplete="current-password")
+           # Trocamos o 'current-password' por 'new-password'
+            pass_input = st.text_input("🔑 Senha de acesso:", type="password", placeholder="••••••••", autocomplete="new-password")
             
             if st.button("Entrar no Sistema", use_container_width=True):
                 if user_input != "Selecione...":
