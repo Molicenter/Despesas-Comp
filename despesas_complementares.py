@@ -22,6 +22,9 @@ st.markdown("""
     <style>
     [data-testid="collapsedControl"] {display: none;}
     
+    /* Oculta as tabelas espelho na tela normal (só aparecem na impressão) */
+    .print-only-table { display: none; }
+    
     /* ESTILOS DA NOSSA NOVA TABELA NATIVA (Para a Tela) */
     .custom-table table {
         width: 100%;
@@ -82,24 +85,19 @@ st.markdown("""
         
         /* Estiliza os cards para impressão (branco com borda preta) */
        .print-card {
-    background: #FFFFFF !important;
-    background-color: #FFFFFF !important;
-    border: 1px solid #000000 !important;
-    box-shadow: none !important;
-}
+            background: #FFFFFF !important;
+            background-color: #FFFFFF !important;
+            border: 1px solid #000000 !important;
+            box-shadow: none !important;
+        }
 
-.print-card * {
-    color: #000000 !important;
-}
+        .print-card * {
+            color: #000000 !important;
+        }
 
-.print-card p,
-.print-card h1,
-.print-card h2,
-.print-card h3,
-.print-card h4,
-.print-card h5 {
-    color: #000000 !important;
-}
+        /* TRUQUE PARA AS TABELAS: Esconde as pretas, mostra as brancas HTML */
+        [data-testid="stDataFrame"] { display: none !important; }
+        .print-only-table { display: block !important; }
 
         /* Ajusta o título para nunca se separar da tabela */
         h3 {
@@ -119,9 +117,9 @@ st.markdown("""
             color: #000000 !important;
             border-bottom: 1px solid #999999 !important;
             font-size: 9px !important;
-    padding: 2px 4px !important;
-    line-height: 1.0 !important;
-}
+            padding: 2px 4px !important;
+            line-height: 1.0 !important;
+        }
         
         table { 
             page-break-inside: auto !important; 
@@ -357,6 +355,13 @@ if perfil == "loja":
             
             with col_tabela:
                 st.dataframe(df_loja, use_container_width=True, hide_index=True)
+                
+                # --- TABELA FANTASMA PARA IMPRESSÃO (Visão Loja) ---
+                try:
+                    html_loja = df_loja.style.hide(axis="index").to_html()
+                except:
+                    html_loja = df_loja.style.hide_index().to_html()
+                st.markdown(f'<div class="print-only-table custom-table">{html_loja}</div>', unsafe_allow_html=True)
             
             with col_delete:
                 with st.container(border=True):
@@ -478,6 +483,13 @@ elif perfil in ["admin", "supervisor"]:
                     "Valor": st.column_config.NumberColumn(format="R$ %.2f", disabled=True),
                 }
             )
+            
+            # --- TABELA FANTASMA PARA IMPRESSÃO (Visão Gerencial Pendentes) ---
+            try:
+                html_pendentes = df_edicao.style.hide(axis="index").to_html()
+            except:
+                html_pendentes = df_edicao.style.hide_index().to_html()
+            st.markdown(f'<div class="print-only-table custom-table">{html_pendentes}</div>', unsafe_allow_html=True)
             
             st.markdown("<br>", unsafe_allow_html=True)
             
