@@ -49,7 +49,7 @@ st.markdown("""
     @media print {
         @page {
             size: landscape;
-            margin: 5mm; /* Margens mínimas absolutas (Ganha muito espaço) */
+            margin: 8mm; /* Margens mínimas para ganhar espaço */
         }
 
         /* 1. RESET ESTRUTURAL EXTREMO */
@@ -64,28 +64,22 @@ st.markdown("""
             overflow: visible !important;
         }
 
-        /* 2. ANIQUILAÇÃO DE CAIXAS FANTASMAS (O Segredo para colar tudo) */
-        /* O :has() deteta se a caixa tem um botão ou tabela invisível e destrói a própria caixa */
-        .element-container:has([data-testid="stDataEditor"]),
-        .element-container:has([data-testid="stDataFrame"]),
-        .element-container:has([data-testid="stTable"]),
-        .element-container:has(button),
-        .element-container:has(iframe),
-        .element-container:has(.no-print) {
-            display: none !important;
-            position: absolute !important;
+        /* Ocultação violenta de elementos desnecessários */
+        button, iframe, header, footer, 
+        [data-testid="stToolbar"], 
+        [data-testid="stManageApp"],
+        [data-testid="stDataEditor"], 
+        [data-testid="stDataFrame"], 
+        [data-testid="stTable"],
+        .no-print { 
+            display: none !important; 
             height: 0 !important;
-            width: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
-            overflow: hidden !important;
+            position: absolute !important;
         }
 
-        button, iframe, header, footer, [data-testid="stToolbar"], [data-testid="stManageApp"] { 
-            display: none !important; 
-        }
-
-        /* 3. ZERAR ESPAÇAMENTOS NATURAIS DO STREAMLIT */
+        /* 2. ZERAR ESPAÇAMENTOS FANTASMAS DO STREAMLIT */
         [data-testid="stVerticalBlock"] {
             display: block !important;
             gap: 0 !important; 
@@ -93,6 +87,7 @@ st.markdown("""
             margin: 0 !important;
         }
         
+        /* A caixa de cada elemento passa a ter margem zero para não somar espaços vazios */
         .element-container {
             display: block !important;
             position: relative !important;
@@ -100,43 +95,44 @@ st.markdown("""
             padding: 0 !important;
         }
 
-        /* 4. TÍTULOS E LINHAS SUPER COLADOS */
+        /* 3. TÍTULOS E LINHAS COLADOS */
         h1, h2, h3, h4, h5 {
             color: #000000 !important;
-            margin: 2px 0 2px 0 !important;
+            margin: 4px 0 2px 0 !important;
             padding: 0 !important;
             page-break-after: avoid !important;
             line-height: 1.1 !important;
         }
         
-        h2 { font-size: 16px !important; }
-        h3 { font-size: 14px !important; }
-        h4 { font-size: 12px !important; }
+        /* Reduzindo ligeiramente o tamanho da fonte dos títulos */
+        h2 { font-size: 18px !important; }
+        h3 { font-size: 15px !important; }
+        h4 { font-size: 13px !important; }
         
         hr {
-            margin: 2px 0 !important;
+            margin: 4px 0 !important;
             border-top: 1px solid #ccc !important;
         }
 
         /* Caixas de Alerta Super Compactas */
         [data-testid="stAlert"] {
             display: block !important;
-            margin: 2px 0 !important;
-            padding: 4px 6px !important;
+            margin: 2px 0 4px 0 !important;
+            padding: 4px 8px !important;
             min-height: 0 !important;
         }
         [data-testid="stAlert"] * {
-            font-size: 10px !important;
+            font-size: 11px !important;
             margin: 0 !important;
         }
 
-        /* 5. BLOCOS LATERAIS (Assinaturas e Resumo) */
+        /* 4. BLOCOS LATERAIS (Assinaturas e Resumo) */
         [data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
             align-items: center !important;
-            gap: 5px !important;
-            margin-top: 2px !important;
+            gap: 10px !important;
+            margin-top: 4px !important;
             margin-bottom: 0 !important;
             page-break-inside: avoid !important;
         }
@@ -146,7 +142,7 @@ st.markdown("""
             padding: 0 !important;
         }
 
-        /* 6. CARTÕES DE NÚMEROS (Totais Mínimos) */
+        /* 5. CARTÕES DE NÚMEROS (Totais Mínimos) */
         .print-card {
             background: #FFFFFF !important;
             border: 1px solid #000000 !important;
@@ -154,25 +150,27 @@ st.markdown("""
             margin: 0 !important;
             padding: 2px !important;
         }
-        .print-card * { color: #000000 !important; margin: 0 !important; line-height: 1.1 !important; }
-        .print-card h3 { font-size: 13px !important; margin: 1px 0 !important;}
-        .print-card p { font-size: 9px !important; }
+        .print-card * {
+            color: #000000 !important;
+            margin: 0 !important;
+            line-height: 1.1 !important;
+        }
+        .print-card h3 { font-size: 14px !important; margin: 2px 0 !important;}
+        .print-card p { font-size: 10px !important; }
 
-        /* 7. TABELAS SUPER COLADAS E COMPACTAS */
+        /* 6. TABELAS SUPER COLADAS */
         .print-only-table { 
             display: block !important; 
-            margin-bottom: 4px !important; 
+            margin-bottom: 6px !important; 
         }
         .custom-table table {
             margin-bottom: 2px !important;
-            width: 100% !important;
-            border-collapse: collapse !important;
         }
         .custom-table th, .custom-table td {
             color: #000000 !important;
             border-bottom: 1px solid #999999 !important;
-            font-size: 9px !important; /* Fonte hiper otimizada */
-            padding: 1px 2px !important; /* Margens internas mínimas */
+            font-size: 9.5px !important; /* Fonte otimizada */
+            padding: 2px 3px !important; /* Células bem apertadas */
             line-height: 1.0 !important;
         }
         
@@ -180,7 +178,7 @@ st.markdown("""
         tr { page-break-inside: avoid !important; page-break-after: auto !important; }
         thead { display: table-header-group !important; }
 
-        /* 8. IMAGENS DAS ASSINATURAS (Reduzidas para garantir encaixe) */
+        /* 7. IMAGENS DAS ASSINATURAS (Menores para encaixar sempre) */
         [data-testid="stImage"] {
             display: block !important;
             height: auto !important;
@@ -188,7 +186,7 @@ st.markdown("""
             padding: 0 !important;
         }
         [data-testid="stImage"] img {
-            max-height: 50px !important; /* Bem pequenas para não empurrar nada */
+            max-height: 65px !important; /* Limite de altura mais rígido */
             width: auto !important;
             margin: 0 auto !important;
             display: block !important;
@@ -311,7 +309,7 @@ if not st.session_state["logado_despesas"]:
 # 3. FUNÇÕES DE DADOS E CABEÇALHO SUPERIOR
 # =========================================================
 
-# Função de Apoio para Formatar Dinheiro 
+# Função de Apoio para Formatar Dinheiro (Evitar as várias casas decimais)
 def formata_br(valor):
     try:
         return f"R$ {float(valor):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
@@ -353,13 +351,13 @@ with col_title:
 with col_info:
     st.markdown(f"<div style='text-align: right; margin-top: 5px; color: #cbd5e1; font-size: 14px;'><b>Usuário:</b> {st.session_state['usuario']}<br><b>Nível:</b> {perfil.upper()}</div>", unsafe_allow_html=True)
 with col_btn:
-    st.markdown("<div class='no-print'>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top: 5px;' class='no-print'>", unsafe_allow_html=True)
     if st.button("🚪 Sair", use_container_width=True):
         st.session_state.clear() 
         st.rerun()
     st.markdown("</div>", unsafe_allow_html=True)
 
-st.markdown("<hr class='custom-hr'>", unsafe_allow_html=True)
+st.markdown("<hr style='margin-top: 5px; margin-bottom: 25px;'>", unsafe_allow_html=True)
 
 # =========================================================
 # 4. INTERFACE PRINCIPAL
@@ -414,7 +412,7 @@ if perfil == "loja":
                     time.sleep(1.5)
                     st.rerun()
 
-    st.markdown("<hr class='custom-hr'>", unsafe_allow_html=True)
+    st.markdown("---")
     
     col_tabela, col_delete = st.columns([0.7, 0.3])
     
@@ -514,7 +512,7 @@ elif perfil in ["admin", "supervisor"]:
         
         def card_metrica(coluna, titulo, qtd, valor, cor_valor):
             coluna.markdown(f"""
-            <div class='print-card' style='background-color:#1e293b; border-radius:6px; border:1px solid #334155; text-align:center;'>
+            <div class='print-card' style='background-color:#1e293b; padding:8px 5px; border-radius:6px; border:1px solid #334155; text-align:center;'>
                 <p style='margin:0; font-size:14px; color:#cbd5e1; line-height:1.2;'>{titulo}</p>
                 <h3 style='margin:2px 0; color:#ffffff; line-height:1.2;'>{qtd}</h3>
                 <p style='margin:0; font-size:18px; color:{cor_valor}; font-weight:bold; line-height:1.2;'>R$ {valor:,.2f}</p>
@@ -527,13 +525,13 @@ elif perfil in ["admin", "supervisor"]:
         card_metrica(col4, "Total Geral", len(df_exibicao), df_exibicao['Valor'].sum(), "#38bdf8")
 
         # --- AVALIAÇÃO EM LOTE ---
-        st.markdown("<hr class='custom-hr'>", unsafe_allow_html=True)
-        st.markdown("<h3>⏳ Avaliação em Lote (Lançamentos Pendentes)</h3>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin: 15px 0;'>", unsafe_allow_html=True)
+        st.markdown("<h3 style='margin-top:0;'>⏳ Avaliação em Lote (Lançamentos Pendentes)</h3>", unsafe_allow_html=True)
                 
         if df_pendentes.empty:
             st.info("✨ Maravilha! Não há despesas pendentes de aprovação no momento.")
         else:
-            st.markdown("<span class='no-print' style='font-size:14px; color:#cbd5e1;'>Dê <b>dois cliques</b> na coluna <b>Avaliação 📝</b> para alterar o status. Ao finalizar, clique em salvar.</span>", unsafe_allow_html=True)
+            st.markdown("<span class='no-print' style='font-size:14px; color:#cbd5e1;'>Dê <b>dois cliques</b> na coluna <b>Avaliação 📝</b> para alterar o status, ou use os botões abaixo para marcação em lote. Ao finalizar, clique em salvar no final da página.</span>", unsafe_allow_html=True)
             
             if "status_lote_padrao" not in st.session_state:
                 st.session_state["status_lote_padrao"] = "🟡 Pendente"
@@ -639,7 +637,7 @@ elif perfil in ["admin", "supervisor"]:
         # =========================================================
         # TABELA CONSOLIDADA E HISTÓRICO - INJEÇÃO HTML DIRETA
         # =========================================================
-        st.markdown("<hr class='custom-hr'>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin: 15px 0;'>", unsafe_allow_html=True)
         st.markdown("<h3>📚 Despesas Complementares dessa semana</h3>", unsafe_allow_html=True)
 
         if df_historico.empty:
@@ -650,6 +648,7 @@ elif perfil in ["admin", "supervisor"]:
             ).reset_index(drop=True)
 
             df_view = df_historico.copy()
+            # Tabela Histórico com Valores Formatados
             df_view['Valor'] = df_view['Valor'].apply(formata_br)
 
             df_tela = df_view.copy()
@@ -693,6 +692,7 @@ elif perfil in ["admin", "supervisor"]:
                     Total_RS=('Valor', 'sum')
                 ).reset_index()
                 
+                # Aplica a formatação oficial com 2 casas decimais
                 resumo_lojas['Total_RS'] = resumo_lojas['Total_RS'].apply(formata_br)
                 resumo_lojas.rename(columns={'Loja': 'Loja', 'Qtde': 'Qtde', 'Total_RS': 'R$'}, inplace=True)
                 
@@ -716,7 +716,7 @@ elif perfil in ["admin", "supervisor"]:
         # =========================================================
         # BOTÕES DE EXPORTAR, IMPRIMIR E LIMPAR
         # =========================================================
-        st.markdown("<hr class='no-print custom-hr'>", unsafe_allow_html=True)
+        st.markdown("<hr class='no-print' style='margin: 15px 0;'>", unsafe_allow_html=True)
         
         col_export, col_print, col_clear = st.columns([1, 1, 1])
 
