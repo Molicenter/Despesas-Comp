@@ -754,36 +754,43 @@ elif perfil in ["admin", "supervisor"]:
                 resumo_lojas['Qtde_Desp'] = resumo_lojas['Qtde_Desp'].fillna(0).astype(int)
                 resumo_lojas['Desp_RS'] = resumo_lojas['Desp_RS'].fillna(0.0)
 
+                # CÁLCULO DA NOVA COLUNA (R$ Diárias = Total - Despesas)
+                resumo_lojas['Diarias_RS'] = resumo_lojas['Total_RS'] - resumo_lojas['Desp_RS']
+
                 # 5. LINHA DE TOTALIZADOR GERAL
                 total_qtde_desp = int(resumo_lojas['Qtde_Desp'].sum())
                 total_desp_rs = resumo_lojas['Desp_RS'].sum()
                 total_qtde_total = int(resumo_lojas['Qtde_Total'].sum())
                 total_total_rs = resumo_lojas['Total_RS'].sum()
+                total_diarias_rs = resumo_lojas['Diarias_RS'].sum()
 
                 linha_total = pd.DataFrame({
                     'Loja': ['TOTAL'],
                     'Qtde_Total': [total_qtde_total],
                     'Total_RS': [total_total_rs],
                     'Qtde_Desp': [total_qtde_desp],
-                    'Desp_RS': [total_desp_rs]
+                    'Desp_RS': [total_desp_rs],
+                    'Diarias_RS': [total_diarias_rs]
                 })
 
                 resumo_lojas = pd.concat([resumo_lojas, linha_total], ignore_index=True)
 
                 # 6. Aplicar formatação de moeda
                 resumo_lojas['Desp_RS'] = resumo_lojas['Desp_RS'].apply(formata_br)
+                resumo_lojas['Diarias_RS'] = resumo_lojas['Diarias_RS'].apply(formata_br)
                 resumo_lojas['Total_RS'] = resumo_lojas['Total_RS'].apply(formata_br)
 
-                # 7. Renomear colunas
+                # 7. Renomear colunas conforme solicitado
                 resumo_lojas.rename(columns={
                     'Qtde_Desp': 'Qtde (Despesas)',
-                    'Desp_RS': 'R$ (Despesas)',
                     'Qtde_Total': 'Qtde (Total)',
-                    'Total_RS': 'R$ (Total)'
+                    'Desp_RS': 'R$ Despesas',
+                    'Diarias_RS': 'R$ Diárias',
+                    'Total_RS': 'R$ Total'
                 }, inplace=True)
                 
                 # 8. Ordenar as colunas
-                resumo_lojas = resumo_lojas[['Loja', 'Qtde (Despesas)', 'R$ (Despesas)', 'Qtde (Total)', 'R$ (Total)']]
+                resumo_lojas = resumo_lojas[['Loja', 'Qtde (Despesas)', 'Qtde (Total)', 'R$ Despesas', 'R$ Diárias', 'R$ Total']]
                 
                 # Estilizar a linha de Totalizador
                 def formata_linha_total(row):
