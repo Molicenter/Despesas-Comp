@@ -43,6 +43,25 @@ st.markdown("""
         font-weight: 600;
     }
 
+    /* ESTILOS DA TABELA DE RESUMO (Centro e Menos Larga) */
+    .resumo-table table {
+        width: 85%;
+        margin: 0 auto; /* Centraliza a tabela no container */
+        border-collapse: collapse;
+        color: #f8fafc;
+        font-size: 14px;
+        margin-bottom: 20px;
+    }
+    .resumo-table th, .resumo-table td {
+        border-bottom: 1px solid #334155;
+        padding: 8px 10px;
+        text-align: center !important; /* Centraliza os textos */
+    }
+    .resumo-table th {
+        color: #94a3b8;
+        font-weight: 600;
+    }
+
     /* ======================================================= */
     /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA (VISIBILIDADE IDEAL) --- */
     /* ======================================================= */
@@ -80,11 +99,10 @@ st.markdown("""
         }
 
         /* 2. ZERAR ESPAÇAMENTOS FANTASMAS MAS MANTER RESPIRO */
-        /* Mata as caixas invisíveis dos botões ocultos (CORRIGIDO para não ocultar as imagens) */
         .element-container:has([data-testid="stDataEditor"]),
         .element-container:has([data-testid="stDataFrame"]),
         .element-container:has([data-testid="stTable"]),
-        .element-container:has([data-testid="stButton"]), /* Foco apenas nos nossos botões */
+        .element-container:has([data-testid="stButton"]),
         .element-container:has([data-testid="stDownloadButton"]),
         .element-container:has(iframe),
         .element-container:has(.no-print) {
@@ -106,7 +124,7 @@ st.markdown("""
         .element-container {
             display: block !important;
             position: relative !important;
-            margin-bottom: 6px !important; /* Respiro suave entre elementos */
+            margin-bottom: 6px !important; 
             padding: 0 !important;
         }
 
@@ -156,13 +174,13 @@ st.markdown("""
             padding: 0 !important;
         }
 
-        /* 5. CARTÕES DE NÚMEROS (Mais vistosos) */
+        /* 5. CARTÕES DE NÚMEROS */
         .print-card {
             background: #FFFFFF !important;
             border: 1px solid #000000 !important;
             box-shadow: none !important;
             margin: 0 !important;
-            padding: 6px !important; /* Mais espaço interno */
+            padding: 6px !important;
         }
         .print-card * {
             color: #000000 !important;
@@ -185,16 +203,28 @@ st.markdown("""
         .custom-table th, .custom-table td {
             color: #000000 !important;
             border-bottom: 1px solid #999999 !important;
-            font-size: 11px !important; /* Fonte aumentada para melhor leitura */
-            padding: 4px 6px !important; /* Células com respiro adequado */
+            font-size: 11px !important;
+            padding: 4px 6px !important;
             line-height: 1.2 !important;
+        }
+        .resumo-table table {
+            width: 100% !important;
+            margin-bottom: 5px !important;
+            border-collapse: collapse !important;
+        }
+        .resumo-table th, .resumo-table td {
+            color: #000000 !important;
+            border-bottom: 1px solid #999999 !important;
+            font-size: 11px !important;
+            padding: 4px 6px !important;
+            text-align: center !important;
         }
         
         table { page-break-inside: auto !important; }
         tr { page-break-inside: avoid !important; page-break-after: auto !important; }
         thead { display: table-header-group !important; }
 
-        /* 7. IMAGENS DAS ASSINATURAS (Tamanho ideal) */
+        /* 7. IMAGENS DAS ASSINATURAS */
         [data-testid="stImage"] {
             display: block !important;
             height: auto !important;
@@ -202,7 +232,7 @@ st.markdown("""
             padding: 0 !important;
         }
         [data-testid="stImage"] img {
-            max-height: 85px !important; /* Tamanho suficiente para ver a assinatura */
+            max-height: 85px !important;
             max-width: 100% !important;
             width: auto !important;
             margin: 0 auto !important;
@@ -327,7 +357,6 @@ if not st.session_state["logado_despesas"]:
 # 3. FUNÇÕES DE DADOS E CABEÇALHO SUPERIOR
 # =========================================================
 
-# Função de Apoio para Formatar Dinheiro (Evitar as várias casas decimais)
 def formata_br(valor):
     try:
         return f"R$ {float(valor):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
@@ -446,7 +475,6 @@ if perfil == "loja":
             with col_tabela:
                 st.dataframe(df_loja, use_container_width=True, hide_index=True)
                 
-                # --- TABELA FANTASMA PARA IMPRESSÃO (Visão Loja) - FORMATADA ---
                 df_loja_print = df_loja.copy()
                 if 'Valor' in df_loja_print.columns:
                     df_loja_print['Valor'] = df_loja_print['Valor'].apply(formata_br)
@@ -598,7 +626,7 @@ elif perfil in ["admin", "supervisor"]:
                 }
             )
             
-            # --- TABELA FANTASMA PARA IMPRESSÃO (Pendentes) - FORMATADA ---
+            # --- TABELA FANTASMA PARA IMPRESSÃO (Pendentes) ---
             df_edicao_print = df_edicao.copy()
             if 'Valor' in df_edicao_print.columns:
                 df_edicao_print['Valor'] = df_edicao_print['Valor'].apply(formata_br)
@@ -720,35 +748,54 @@ elif perfil in ["admin", "supervisor"]:
                 # 3. Mesclar os dois agrupamentos (merge)
                 resumo_lojas = pd.merge(resumo_total, resumo_despesas, on='Loja', how='left')
 
-                # 4. Tratar valores nulos (caso alguma loja não tenha "Despesas (Justificar)")
+                # 4. Tratar valores nulos
                 resumo_lojas['Qtde_Desp'] = resumo_lojas['Qtde_Desp'].fillna(0).astype(int)
                 resumo_lojas['Desp_RS'] = resumo_lojas['Desp_RS'].fillna(0.0)
 
-                # 5. Aplicar formatação de moeda
+                # 5. LINHA DE TOTALIZADOR GERAL
+                total_qtde_desp = int(resumo_lojas['Qtde_Desp'].sum())
+                total_desp_rs = resumo_lojas['Desp_RS'].sum()
+                total_qtde_total = int(resumo_lojas['Qtde_Total'].sum())
+                total_total_rs = resumo_lojas['Total_RS'].sum()
+
+                linha_total = pd.DataFrame({
+                    'Loja': ['TOTAL'],
+                    'Qtde_Total': [total_qtde_total],
+                    'Total_RS': [total_total_rs],
+                    'Qtde_Desp': [total_qtde_desp],
+                    'Desp_RS': [total_desp_rs]
+                })
+
+                resumo_lojas = pd.concat([resumo_lojas, linha_total], ignore_index=True)
+
+                # 6. Aplicar formatação de moeda
                 resumo_lojas['Desp_RS'] = resumo_lojas['Desp_RS'].apply(formata_br)
                 resumo_lojas['Total_RS'] = resumo_lojas['Total_RS'].apply(formata_br)
 
-                # 6. Renomear as colunas
+                # 7. Renomear colunas
                 resumo_lojas.rename(columns={
                     'Qtde_Desp': 'Qtde (Despesas)',
                     'Desp_RS': 'R$ (Despesas)',
                     'Qtde_Total': 'Qtde (Total)',
                     'Total_RS': 'R$ (Total)'
                 }, inplace=True)
-
-                # 7. Ordenar as colunas para o visual desejado
+                
+                # 8. Ordenar as colunas
                 resumo_lojas = resumo_lojas[['Loja', 'Qtde (Despesas)', 'R$ (Despesas)', 'Qtde (Total)', 'R$ (Total)']]
                 
-                # Ajuste de proporção para as 5 colunas caberem confortavelmente
-                _, col_tabela_centro, _ = st.columns([0.2, 4, 0.2])
-                
-                with col_tabela_centro:
-                    try:
-                        html_resumo = resumo_lojas.style.hide(axis="index").to_html()
-                    except:
-                        html_resumo = resumo_lojas.style.hide_index().to_html()
-                        
-                    st.markdown(f'<div class="custom-table">{html_resumo}</div>', unsafe_allow_html=True)
+                # Estilizar a linha de Totalizador
+                def formata_linha_total(row):
+                    if row['Loja'] == 'TOTAL':
+                        return ['font-weight: bold; background-color: #334155; color: #ffffff;'] * len(row)
+                    return [''] * len(row)
+
+                try:
+                    html_resumo = resumo_lojas.style.apply(formata_linha_total, axis=1).hide(axis="index").to_html()
+                except:
+                    html_resumo = resumo_lojas.style.apply(formata_linha_total, axis=1).hide_index().to_html()
+                    
+                # Aplicamos a nova classe "resumo-table"
+                st.markdown(f'<div class="resumo-table">{html_resumo}</div>', unsafe_allow_html=True)
             else:
                 st.info("Nenhuma despesa aprovada até o momento.")
 
