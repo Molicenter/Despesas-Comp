@@ -704,15 +704,43 @@ elif perfil in ["admin", "supervisor"]:
             st.markdown("<h4 style='text-align: center; margin-top: 0;'>🏪 Resumo de Aprovados por Loja</h4>", unsafe_allow_html=True)
             
             if not df_aprovados.empty:
-                resumo_lojas = df_aprovados.groupby('Loja').agg(
-                    Qtde=('Valor', 'count'),
+                # 1. Agrupamento do Total Geral
+                resumo_total = df_aprovados.groupby('Loja').agg(
+                    Qtde_Total=('Valor', 'count'),
                     Total_RS=('Valor', 'sum')
                 ).reset_index()
-                
+
+                # 2. Agrupamento apenas de "Despesas (Justificar)"
+                df_apenas_despesas = df_aprovados[df_aprovados['Motivo'].astype(str).str.strip() == 'Despesas (Justificar)']
+                resumo_despesas = df_apenas_despesas.groupby('Loja').agg(
+                    Qtde_Desp=('Valor', 'count'),
+                    Desp_RS=('Valor', 'sum')
+                ).reset_index()
+
+                # 3. Mesclar os dois agrupamentos (merge)
+                resumo_lojas = pd.merge(resumo_total, resumo_despesas, on='Loja', how='left')
+
+                # 4. Tratar valores nulos (caso alguma loja não tenha "Despesas (Justificar)")
+                resumo_lojas['Qtde_Desp'] = resumo_lojas['Qtde_Desp'].fillna(0).astype(int)
+                resumo_lojas['Desp_RS'] = resumo_lojas['Desp_RS'].fillna(0.0)
+
+                # 5. Aplicar formatação de moeda
+                resumo_lojas['Desp_RS'] = resumo_lojas['Desp_RS'].apply(formata_br)
                 resumo_lojas['Total_RS'] = resumo_lojas['Total_RS'].apply(formata_br)
-                resumo_lojas.rename(columns={'Loja': 'Loja', 'Qtde': 'Qtde', 'Total_RS': 'R$'}, inplace=True)
+
+                # 6. Renomear as colunas
+                resumo_lojas.rename(columns={
+                    'Qtde_Desp': 'Qtde (Despesas)',
+                    'Desp_RS': 'R$ (Despesas)',
+                    'Qtde_Total': 'Qtde (Total)',
+                    'Total_RS': 'R$ (Total)'
+                }, inplace=True)
+
+                # 7. Ordenar as colunas para o visual desejado
+                resumo_lojas = resumo_lojas[['Loja', 'Qtde (Despesas)', 'R$ (Despesas)', 'Qtde (Total)', 'R$ (Total)']]
                 
-                _, col_tabela_centro, _ = st.columns([1, 2, 1])
+                # Ajuste de proporção para as 5 colunas caberem confortavelmente
+                _, col_tabela_centro, _ = st.columns([0.2, 4, 0.2])
                 
                 with col_tabela_centro:
                     try:
