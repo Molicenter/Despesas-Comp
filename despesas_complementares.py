@@ -64,7 +64,7 @@ st.markdown("""
             overflow: visible !important;
         }
 
-        /* Ocultação de botões e ferramentas nativas */
+        /* Ocultação de botões e ferramentas nativas da interface */
         button, iframe, header, footer, 
         [data-testid="stToolbar"], 
         [data-testid="stManageApp"],
@@ -80,16 +80,20 @@ st.markdown("""
         }
 
         /* 2. ZERAR ESPAÇAMENTOS FANTASMAS MAS MANTER RESPIRO */
-        /* Mata as caixas invisíveis dos botões ocultos */
+        /* Mata as caixas invisíveis dos botões ocultos (CORRIGIDO para não ocultar as imagens) */
         .element-container:has([data-testid="stDataEditor"]),
         .element-container:has([data-testid="stDataFrame"]),
         .element-container:has([data-testid="stTable"]),
-        .element-container:has(button),
+        .element-container:has([data-testid="stButton"]), /* Foco apenas nos nossos botões */
+        .element-container:has([data-testid="stDownloadButton"]),
         .element-container:has(iframe),
         .element-container:has(.no-print) {
             display: none !important;
             position: absolute !important;
             height: 0 !important;
+            width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
 
         [data-testid="stVerticalBlock"] {
@@ -199,9 +203,11 @@ st.markdown("""
         }
         [data-testid="stImage"] img {
             max-height: 85px !important; /* Tamanho suficiente para ver a assinatura */
+            max-width: 100% !important;
             width: auto !important;
             margin: 0 auto !important;
             display: block !important;
+            position: relative !important;
         }
 
         * {
