@@ -44,15 +44,15 @@ st.markdown("""
     }
 
     /* ======================================================= */
-    /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA --- */
+    /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA (VISIBILIDADE IDEAL) --- */
     /* ======================================================= */
     @media print {
         @page {
             size: landscape;
-            margin: 15mm;
+            margin: 10mm; /* Margem segura para não cortar nas bordas da impressora */
         }
 
-        /* 1. RESET ESTRUTURAL E OCULTAÇÃO DO SISTEMA */
+        /* 1. RESET ESTRUTURAL */
         html, body, #root, .stApp, main, 
         [data-testid="stAppViewContainer"], 
         [data-testid="block-container"] {
@@ -60,9 +60,11 @@ st.markdown("""
             height: auto !important;
             background-color: #FFFFFF !important;
             padding: 0 !important;
+            margin: 0 !important;
             overflow: visible !important;
         }
 
+        /* Ocultação de botões e ferramentas nativas */
         button, iframe, header, footer, 
         [data-testid="stToolbar"], 
         [data-testid="stManageApp"],
@@ -71,38 +73,67 @@ st.markdown("""
         [data-testid="stTable"],
         .no-print { 
             display: none !important; 
+            height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            position: absolute !important;
         }
 
-        /* 2. RECUPERAR O ESPAÇAMENTO NATURAL (Evita as sobreposições) */
+        /* 2. ZERAR ESPAÇAMENTOS FANTASMAS MAS MANTER RESPIRO */
+        /* Mata as caixas invisíveis dos botões ocultos */
+        .element-container:has([data-testid="stDataEditor"]),
+        .element-container:has([data-testid="stDataFrame"]),
+        .element-container:has([data-testid="stTable"]),
+        .element-container:has(button),
+        .element-container:has(iframe),
+        .element-container:has(.no-print) {
+            display: none !important;
+            position: absolute !important;
+            height: 0 !important;
+        }
+
         [data-testid="stVerticalBlock"] {
             display: block !important;
             gap: 0 !important; 
+            padding: 0 !important;
+            margin: 0 !important;
         }
         
         .element-container {
             display: block !important;
             position: relative !important;
-            margin-bottom: 12px !important; /* Dá espaço para os títulos respirarem */
+            margin-bottom: 6px !important; /* Respiro suave entre elementos */
             padding: 0 !important;
         }
 
-        /* 3. TÍTULOS E LINHAS */
+        /* 3. TÍTULOS E LINHAS (Legíveis) */
         h1, h2, h3, h4, h5 {
             color: #000000 !important;
-            margin: 10px 0 5px 0 !important;
+            margin: 10px 0 4px 0 !important;
             padding: 0 !important;
             page-break-after: avoid !important;
+            line-height: 1.2 !important;
         }
         
+        h2 { font-size: 20px !important; }
+        h3 { font-size: 16px !important; }
+        h4 { font-size: 14px !important; }
+        
         hr {
-            margin: 10px 0 !important;
+            margin: 8px 0 !important;
             border-top: 1px solid #ccc !important;
         }
 
+        /* Caixas de Alerta (Azul/Verde) */
         [data-testid="stAlert"] {
             display: block !important;
-            margin: 10px 0 !important;
-            padding: 10px !important;
+            margin: 4px 0 8px 0 !important;
+            padding: 6px 10px !important;
+            min-height: 0 !important;
+        }
+        [data-testid="stAlert"] * {
+            font-size: 12px !important;
+            margin: 0 !important;
         }
 
         /* 4. BLOCOS LATERAIS (Assinaturas e Resumo) */
@@ -111,55 +142,63 @@ st.markdown("""
             flex-direction: row !important;
             align-items: center !important;
             gap: 15px !important;
-            margin-top: 15px !important;
+            margin-top: 10px !important;
+            margin-bottom: 5px !important;
             page-break-inside: avoid !important;
         }
         [data-testid="column"] {
             display: block !important;
             flex: 1 1 0% !important; 
+            padding: 0 !important;
         }
 
-        /* 5. CARTÕES DE NÚMEROS (Totais) */
+        /* 5. CARTÕES DE NÚMEROS (Mais vistosos) */
         .print-card {
             background: #FFFFFF !important;
             border: 1px solid #000000 !important;
             box-shadow: none !important;
             margin: 0 !important;
-            padding: 5px !important;
+            padding: 6px !important; /* Mais espaço interno */
         }
         .print-card * {
             color: #000000 !important;
-            margin: 2px 0 !important;
+            margin: 0 !important;
+            line-height: 1.2 !important;
         }
+        .print-card h3 { font-size: 18px !important; margin: 4px 0 !important; }
+        .print-card p { font-size: 12px !important; font-weight: bold; }
 
-        /* 6. TABELAS PERFEITAS NA IMPRESSÃO */
+        /* 6. TABELAS (Mais fáceis de ler) */
         .print-only-table { 
             display: block !important; 
-            margin-bottom: 15px !important; 
+            margin-bottom: 10px !important; 
         }
         .custom-table table {
-            margin-bottom: 10px !important;
+            margin-bottom: 5px !important;
+            width: 100% !important;
+            border-collapse: collapse !important;
         }
         .custom-table th, .custom-table td {
             color: #000000 !important;
             border-bottom: 1px solid #999999 !important;
-            font-size: 10px !important;
-            padding: 4px 5px !important;
-            line-height: 1.1 !important;
+            font-size: 11px !important; /* Fonte aumentada para melhor leitura */
+            padding: 4px 6px !important; /* Células com respiro adequado */
+            line-height: 1.2 !important;
         }
         
         table { page-break-inside: auto !important; }
         tr { page-break-inside: avoid !important; page-break-after: auto !important; }
         thead { display: table-header-group !important; }
 
-        /* 7. IMAGENS DAS ASSINATURAS */
+        /* 7. IMAGENS DAS ASSINATURAS (Tamanho ideal) */
         [data-testid="stImage"] {
             display: block !important;
             height: auto !important;
             margin: 0 !important;
+            padding: 0 !important;
         }
         [data-testid="stImage"] img {
-            max-height: 80px !important; 
+            max-height: 85px !important; /* Tamanho suficiente para ver a assinatura */
             width: auto !important;
             margin: 0 auto !important;
             display: block !important;
@@ -351,7 +390,6 @@ if perfil == "loja":
             valor = st.number_input("Valor (R$) *", min_value=0.0, step=10.0, format="%.2f", value=None)
             obs = st.text_area("Observações", placeholder="Justificativa ou transferência...")
             
-        st.markdown("<br class='no-print'>", unsafe_allow_html=True)
         submit = st.form_submit_button("💾 Registrar Despesa", type="primary", use_container_width=True)
         
         if submit:
@@ -386,7 +424,7 @@ if perfil == "loja":
                     time.sleep(1.5)
                     st.rerun()
 
-    st.markdown("---")
+    st.markdown("<hr class='custom-hr'>", unsafe_allow_html=True)
     
     col_tabela, col_delete = st.columns([0.7, 0.3])
     
@@ -486,7 +524,7 @@ elif perfil in ["admin", "supervisor"]:
         
         def card_metrica(coluna, titulo, qtd, valor, cor_valor):
             coluna.markdown(f"""
-            <div class='print-card' style='background-color:#1e293b; padding:8px 5px; border-radius:6px; border:1px solid #334155; text-align:center;'>
+            <div class='print-card' style='background-color:#1e293b; border-radius:6px; border:1px solid #334155; text-align:center;'>
                 <p style='margin:0; font-size:14px; color:#cbd5e1; line-height:1.2;'>{titulo}</p>
                 <h3 style='margin:2px 0; color:#ffffff; line-height:1.2;'>{qtd}</h3>
                 <p style='margin:0; font-size:18px; color:{cor_valor}; font-weight:bold; line-height:1.2;'>R$ {valor:,.2f}</p>
@@ -499,18 +537,16 @@ elif perfil in ["admin", "supervisor"]:
         card_metrica(col4, "Total Geral", len(df_exibicao), df_exibicao['Valor'].sum(), "#38bdf8")
 
         # --- AVALIAÇÃO EM LOTE ---
-        st.markdown("<hr style='margin: 15px 0;'>", unsafe_allow_html=True)
-        st.markdown("<h3 style='margin-top:0;'>⏳ Avaliação em Lote (Lançamentos Pendentes)</h3>", unsafe_allow_html=True)
+        st.markdown("<hr class='custom-hr'>", unsafe_allow_html=True)
+        st.markdown("<h3>⏳ Avaliação em Lote (Lançamentos Pendentes)</h3>", unsafe_allow_html=True)
                 
         if df_pendentes.empty:
             st.info("✨ Maravilha! Não há despesas pendentes de aprovação no momento.")
         else:
-            st.markdown("<span class='no-print' style='font-size:14px; color:#cbd5e1;'>Dê <b>dois cliques</b> na coluna <b>Avaliação 📝</b> para alterar o status, ou use os botões abaixo para marcação em lote. Ao finalizar, clique em salvar no final da página.</span>", unsafe_allow_html=True)
+            st.markdown("<span class='no-print' style='font-size:14px; color:#cbd5e1;'>Dê <b>dois cliques</b> na coluna <b>Avaliação 📝</b> para alterar o status. Ao finalizar, clique em salvar.</span>", unsafe_allow_html=True)
             
             if "status_lote_padrao" not in st.session_state:
                 st.session_state["status_lote_padrao"] = "🟡 Pendente"
-
-            st.markdown("<br class='no-print'>", unsafe_allow_html=True)
             
             col_all1, col_all2, col_all3, espaco_vazio = st.columns([1.2, 1.2, 1.2, 6])
             
@@ -526,8 +562,6 @@ elif perfil in ["admin", "supervisor"]:
                 if st.button("🔄 Pendentes", use_container_width=True):
                     st.session_state["status_lote_padrao"] = "🟡 Pendente"
                     st.rerun()
-
-            st.markdown("<br class='no-print'>", unsafe_allow_html=True)
 
             df_pendentes.insert(0, 'Avaliação 📝', st.session_state["status_lote_padrao"])
             df_edicao = df_pendentes.drop(columns=['Autorização Supervisor'])
@@ -568,8 +602,6 @@ elif perfil in ["admin", "supervisor"]:
             except:
                 html_pendentes = df_edicao_print.style.hide_index().to_html()
             st.markdown(f'<div class="print-only-table custom-table">{html_pendentes}</div>', unsafe_allow_html=True)
-            
-            st.markdown("<br class='no-print'>", unsafe_allow_html=True)
             
             if st.button("💾 Salvar Alterações no Sistema", type="primary"):
                 mudancas = edited_df[edited_df['Avaliação 📝'] != '🟡 Pendente']
@@ -617,7 +649,7 @@ elif perfil in ["admin", "supervisor"]:
         # =========================================================
         # TABELA CONSOLIDADA E HISTÓRICO - INJEÇÃO HTML DIRETA
         # =========================================================
-        st.markdown("<hr style='margin: 15px 0;'>", unsafe_allow_html=True)
+        st.markdown("<hr class='custom-hr'>", unsafe_allow_html=True)
         st.markdown("<h3>📚 Despesas Complementares dessa semana</h3>", unsafe_allow_html=True)
 
         if df_historico.empty:
@@ -628,7 +660,6 @@ elif perfil in ["admin", "supervisor"]:
             ).reset_index(drop=True)
 
             df_view = df_historico.copy()
-            # Esta tabela já aplicava o limite de casas decimais
             df_view['Valor'] = df_view['Valor'].apply(formata_br)
 
             df_tela = df_view.copy()
@@ -661,8 +692,6 @@ elif perfil in ["admin", "supervisor"]:
         with col_sig1:
             if os.path.exists("Luciana.png"):
                 st.image("Luciana.png", use_container_width=True)
-            else:
-                st.markdown("<br class='no-print'>", unsafe_allow_html=True)
 
         # --- MEIO: RESUMO POR LOJA ---
         with col_space:
@@ -674,7 +703,6 @@ elif perfil in ["admin", "supervisor"]:
                     Total_RS=('Valor', 'sum')
                 ).reset_index()
                 
-                # Aplica a formatação oficial com 2 casas
                 resumo_lojas['Total_RS'] = resumo_lojas['Total_RS'].apply(formata_br)
                 resumo_lojas.rename(columns={'Loja': 'Loja', 'Qtde': 'Qtde', 'Total_RS': 'R$'}, inplace=True)
                 
@@ -694,13 +722,11 @@ elif perfil in ["admin", "supervisor"]:
         with col_sig2:
             if os.path.exists("Adriano.png"):
                 st.image("Adriano.png", use_container_width=True)
-            else:
-                st.markdown("<br class='no-print'>", unsafe_allow_html=True)
 
         # =========================================================
         # BOTÕES DE EXPORTAR, IMPRIMIR E LIMPAR
         # =========================================================
-        st.markdown("<hr class='no-print' style='margin: 15px 0;'>", unsafe_allow_html=True)
+        st.markdown("<hr class='no-print custom-hr'>", unsafe_allow_html=True)
         
         col_export, col_print, col_clear = st.columns([1, 1, 1])
 
@@ -750,7 +776,6 @@ elif perfil in ["admin", "supervisor"]:
                     "preparando o sistema para uma nova semana.\n\n"
                     "**Esta operação não pode ser desfeita.**"
                 )
-                st.markdown("<br class='no-print'>", unsafe_allow_html=True)
                 col_sim, col_nao = st.columns(2)
 
                 with col_sim:
