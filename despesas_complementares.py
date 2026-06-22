@@ -1,12 +1,11 @@
 import streamlit as st
 import pandas as pd
-import requests
-import json
 from datetime import datetime, timedelta
 import time
 import io
 import os
 import streamlit.components.v1 as components
+from supabase import create_client, Client
 
 # =========================================================
 # 1. CONFIGURAÇÕES INICIAIS E CSS
@@ -17,6 +16,15 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
+# --- CONEXÃO SUPABASE ---
+try:
+    url = st.secrets["supabase"]["url"]
+    key = st.secrets["supabase"]["key"]
+    supabase: Client = create_client(url, key)
+except Exception as e:
+    st.error("🚨 Credenciais do Supabase não encontradas no secrets.toml!")
+    st.stop()
 
 st.markdown("""
     <style>
@@ -63,194 +71,48 @@ st.markdown("""
     }
 
     /* ======================================================= */
-    /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA (VISIBILIDADE IDEAL) --- */
+    /* --- REGRAS ESPECÍFICAS PARA A IMPRESSORA --- */
     /* ======================================================= */
     @media print {
-        @page {
-            size: landscape;
-            margin: 10mm; /* Margem segura para não cortar nas bordas da impressora */
+        @page { size: landscape; margin: 10mm; }
+        html, body, #root, .stApp, main, [data-testid="stAppViewContainer"], [data-testid="block-container"] {
+            display: block !important; height: auto !important; background-color: #FFFFFF !important;
+            padding: 0 !important; margin: 0 !important; overflow: visible !important;
         }
-
-        /* 1. RESET ESTRUTURAL */
-        html, body, #root, .stApp, main, 
-        [data-testid="stAppViewContainer"], 
-        [data-testid="block-container"] {
-            display: block !important; 
-            height: auto !important;
-            background-color: #FFFFFF !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            overflow: visible !important;
+        button, iframe, header, footer, [data-testid="stToolbar"], [data-testid="stManageApp"],
+        [data-testid="stDataEditor"], [data-testid="stDataFrame"], [data-testid="stTable"], .no-print { 
+            display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; position: absolute !important;
         }
-
-        /* Ocultação de botões e ferramentas nativas da interface */
-        button, iframe, header, footer, 
-        [data-testid="stToolbar"], 
-        [data-testid="stManageApp"],
-        [data-testid="stDataEditor"], 
-        [data-testid="stDataFrame"], 
-        [data-testid="stTable"],
-        .no-print { 
-            display: none !important; 
-            height: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-            position: absolute !important;
+        .element-container:has([data-testid="stDataEditor"]), .element-container:has([data-testid="stDataFrame"]),
+        .element-container:has([data-testid="stTable"]), .element-container:has([data-testid="stButton"]),
+        .element-container:has([data-testid="stDownloadButton"]), .element-container:has(iframe), .element-container:has(.no-print) {
+            display: none !important; position: absolute !important; height: 0 !important; width: 0 !important; margin: 0 !important; padding: 0 !important;
         }
-
-        /* 2. ZERAR ESPAÇAMENTOS FANTASMAS MAS MANTER RESPIRO */
-        .element-container:has([data-testid="stDataEditor"]),
-        .element-container:has([data-testid="stDataFrame"]),
-        .element-container:has([data-testid="stTable"]),
-        .element-container:has([data-testid="stButton"]),
-        .element-container:has([data-testid="stDownloadButton"]),
-        .element-container:has(iframe),
-        .element-container:has(.no-print) {
-            display: none !important;
-            position: absolute !important;
-            height: 0 !important;
-            width: 0 !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-
-        [data-testid="stVerticalBlock"] {
-            display: block !important;
-            gap: 0 !important; 
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-        
-        .element-container {
-            display: block !important;
-            position: relative !important;
-            margin-bottom: 6px !important; 
-            padding: 0 !important;
-        }
-
-        /* 3. TÍTULOS E LINHAS (Legíveis) */
-        h1, h2, h3, h4, h5 {
-            color: #000000 !important;
-            margin: 10px 0 4px 0 !important;
-            padding: 0 !important;
-            page-break-after: avoid !important;
-            line-height: 1.2 !important;
-        }
-        
-        h2 { font-size: 20px !important; }
-        h3 { font-size: 16px !important; }
-        h4 { font-size: 14px !important; }
-        
-        hr {
-            margin: 8px 0 !important;
-            border-top: 1px solid #ccc !important;
-        }
-
-        /* Caixas de Alerta (Azul/Verde) */
-        [data-testid="stAlert"] {
-            display: block !important;
-            margin: 4px 0 8px 0 !important;
-            padding: 6px 10px !important;
-            min-height: 0 !important;
-        }
-        [data-testid="stAlert"] * {
-            font-size: 12px !important;
-            margin: 0 !important;
-        }
-
-        /* 4. BLOCOS LATERAIS (Assinaturas e Resumo) */
-        [data-testid="stHorizontalBlock"] {
-            display: flex !important;
-            flex-direction: row !important;
-            align-items: center !important;
-            gap: 15px !important;
-            margin-top: 10px !important;
-            margin-bottom: 5px !important;
-            page-break-inside: avoid !important;
-        }
-        [data-testid="column"] {
-            display: block !important;
-            flex: 1 1 0% !important; 
-            padding: 0 !important;
-        }
-
-        /* 5. CARTÕES DE NÚMEROS */
-        .print-card {
-            background: #FFFFFF !important;
-            border: 1px solid #000000 !important;
-            box-shadow: none !important;
-            margin: 0 !important;
-            padding: 6px !important;
-        }
-        .print-card * {
-            color: #000000 !important;
-            margin: 0 !important;
-            line-height: 1.2 !important;
-        }
+        [data-testid="stVerticalBlock"] { display: block !important; gap: 0 !important; padding: 0 !important; margin: 0 !important; }
+        .element-container { display: block !important; position: relative !important; margin-bottom: 6px !important; padding: 0 !important; }
+        h1, h2, h3, h4, h5 { color: #000000 !important; margin: 10px 0 4px 0 !important; padding: 0 !important; page-break-after: avoid !important; line-height: 1.2 !important; }
+        h2 { font-size: 20px !important; } h3 { font-size: 16px !important; } h4 { font-size: 14px !important; }
+        hr { margin: 8px 0 !important; border-top: 1px solid #ccc !important; }
+        [data-testid="stAlert"] { display: block !important; margin: 4px 0 8px 0 !important; padding: 6px 10px !important; min-height: 0 !important; }
+        [data-testid="stAlert"] * { font-size: 12px !important; margin: 0 !important; }
+        [data-testid="stHorizontalBlock"] { display: flex !important; flex-direction: row !important; align-items: center !important; gap: 15px !important; margin-top: 10px !important; margin-bottom: 5px !important; page-break-inside: avoid !important; }
+        [data-testid="column"] { display: block !important; flex: 1 1 0% !important; padding: 0 !important; }
+        .print-card { background: #FFFFFF !important; border: 1px solid #000000 !important; box-shadow: none !important; margin: 0 !important; padding: 6px !important; }
+        .print-card * { color: #000000 !important; margin: 0 !important; line-height: 1.2 !important; }
         .print-card h3 { font-size: 18px !important; margin: 4px 0 !important; }
         .print-card p { font-size: 12px !important; font-weight: bold; }
-
-        /* 6. TABELAS (Mais fáceis de ler e fundo forçado branco na impressão) */
-        .print-only-table { 
-            display: block !important; 
-            margin-bottom: 10px !important; 
-        }
-        .custom-table table {
-            margin-bottom: 5px !important;
-            width: 100% !important;
-            border-collapse: collapse !important;
-        }
-        .custom-table th, .custom-table td {
-            color: #000000 !important;
-            background-color: #FFFFFF !important; /* Força fundo branco */
-            border-bottom: 1px solid #999999 !important;
-            font-size: 11px !important;
-            padding: 4px 6px !important;
-            line-height: 1.2 !important;
-        }
-        .resumo-table table {
-            width: 100% !important;
-            margin-bottom: 5px !important;
-            border-collapse: collapse !important;
-        }
-        .resumo-table th, .resumo-table td {
-            color: #000000 !important;
-            background-color: #FFFFFF !important; /* Força fundo branco */
-            border-bottom: 1px solid #999999 !important;
-            font-size: 11px !important;
-            padding: 4px 6px !important;
-            text-align: center !important;
-        }
-        
-        table { page-break-inside: auto !important; }
-        tr { page-break-inside: avoid !important; page-break-after: auto !important; }
-        thead { display: table-header-group !important; }
-
-        /* 7. IMAGENS DAS ASSINATURAS */
-        [data-testid="stImage"] {
-            display: block !important;
-            height: auto !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        [data-testid="stImage"] img {
-            max-height: 85px !important;
-            max-width: 100% !important;
-            width: auto !important;
-            margin: 0 auto !important;
-            display: block !important;
-            position: relative !important;
-        }
-
-        * {
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-        }
+        .print-only-table { display: block !important; margin-bottom: 10px !important; }
+        .custom-table table { margin-bottom: 5px !important; width: 100% !important; border-collapse: collapse !important; }
+        .custom-table th, .custom-table td { color: #000000 !important; background-color: #FFFFFF !important; border-bottom: 1px solid #999999 !important; font-size: 11px !important; padding: 4px 6px !important; line-height: 1.2 !important; }
+        .resumo-table table { width: 100% !important; margin-bottom: 5px !important; border-collapse: collapse !important; }
+        .resumo-table th, .resumo-table td { color: #000000 !important; background-color: #FFFFFF !important; border-bottom: 1px solid #999999 !important; font-size: 11px !important; padding: 4px 6px !important; text-align: center !important; }
+        table { page-break-inside: auto !important; } tr { page-break-inside: avoid !important; page-break-after: auto !important; } thead { display: table-header-group !important; }
+        [data-testid="stImage"] { display: block !important; height: auto !important; margin: 0 !important; padding: 0 !important; }
+        [data-testid="stImage"] img { max-height: 85px !important; max-width: 100% !important; width: auto !important; margin: 0 auto !important; display: block !important; position: relative !important; }
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     }
     </style>
 """, unsafe_allow_html=True)
-
-URL_API_DESPESAS = "https://script.google.com/macros/s/AKfycbwbOdR--mh46XzwbUId8P4OsxQ8-T8ItbE4JwErh10qwMLWWt1S1vYUIFkK1mnzkxArYw/exec"
 
 USUARIOS_DB = {
     "administrador": {"senha": "moli0000", "perfil": "admin", "loja_fixa": None},
@@ -307,14 +169,8 @@ if "logado_despesas" not in st.session_state:
 if not st.session_state["logado_despesas"]:
     st.markdown("""
         <style>
-        div.stButton > button {
-            background-color: #2e7d32 !important; 
-            color: white !important; 
-            font-weight: bold;
-        }
-        div.stButton > button:hover {
-            background-color: #1b5e20 !important;
-        }
+        div.stButton > button { background-color: #2e7d32 !important; color: white !important; font-weight: bold; }
+        div.stButton > button:hover { background-color: #1b5e20 !important; }
         </style>
     """, unsafe_allow_html=True)
 
@@ -356,7 +212,7 @@ if not st.session_state["logado_despesas"]:
     st.stop()
 
 # =========================================================
-# 3. FUNÇÕES DE DADOS E CABEÇALHO SUPERIOR
+# 3. FUNÇÕES DE DADOS (SUPABASE) E CABEÇALHO SUPERIOR
 # =========================================================
 
 def formata_br(valor):
@@ -368,9 +224,23 @@ def formata_br(valor):
 @st.cache_data(ttl=5)
 def carregar_dados():
     try:
-        res = requests.get(URL_API_DESPESAS, timeout=10)
-        if res.status_code == 200:
-            df = pd.DataFrame(res.json())
+        response = supabase.table("despesas_comp").select("*").execute()
+        df = pd.DataFrame(response.data)
+        
+        if not df.empty:
+            # Renomear as colunas do banco para os nomes usados no painel
+            renames = {
+                "created_at": "Carimbo de Data/Hora",
+                "loja": "Loja",
+                "nome_completo": "Nome Completo",
+                "motivo": "Motivo",
+                "observacoes": "Observações",
+                "departamento": "Departamento",
+                "data_trabalhada": "Data Trabalhada",
+                "valor": "Valor",
+                "autorizacao_supervisor": "Autorização Supervisor"
+            }
+            df.rename(columns=renames, inplace=True)
             
             if 'Data Trabalhada' in df.columns:
                 df['Data Trabalhada'] = pd.to_datetime(df['Data Trabalhada'], errors='coerce').dt.strftime('%d/%m/%Y')
@@ -378,15 +248,14 @@ def carregar_dados():
                 
             if 'Carimbo de Data/Hora' in df.columns:
                 dt_series = pd.to_datetime(df['Carimbo de Data/Hora'], errors='coerce')
-                dt_series = dt_series - pd.Timedelta(hours=3) # Subtrai 3 horas
-                
+                dt_series = dt_series - pd.Timedelta(hours=3) # Ajusta para fuso do Brasil
                 df['Carimbo de Data/Hora'] = dt_series.dt.strftime('%d/%m/%Y %H:%M')
                 df['Carimbo de Data/Hora'] = df['Carimbo de Data/Hora'].fillna("-")
                 
-            return df
+        return df
     except Exception as e:
-        st.error("Erro ao conectar com a planilha do Google.")
-    return pd.DataFrame()
+        st.error(f"Erro ao conectar com o Supabase: {e}")
+        return pd.DataFrame()
 
 df_base = carregar_dados()
 
@@ -435,31 +304,27 @@ if perfil == "loja":
             elif valor is None or valor <= 0:
                 st.error("⚠️ O campo Valor deve ser preenchido com um valor maior que zero.")
             else:
-                with st.spinner("⏳ Enviando dados para o Google Sheets..."):
+                with st.spinner("⏳ Enviando dados para o banco..."):
+                    # PREPARA OS DADOS PARA O SUPABASE
                     payload = {
-                        "action": "insert",
-                        "Loja": loja_fixa,
-                        "Nome": nome.upper().strip(),
-                        "Motivo": motivo,
-                        "Observacoes": obs.strip() if obs else "-",
-                        "Departamento": depto,
-                        "DataTrabalhada": data_trab.strftime("%d/%m/%Y"),
-                        "Valor": valor,
-                        "Autorizacao": "Pendente"
+                        "loja": str(loja_fixa),
+                        "nome_completo": nome.upper().strip(),
+                        "motivo": motivo,
+                        "observacoes": obs.strip() if obs else "-",
+                        "departamento": depto,
+                        "data_trabalhada": data_trab.strftime("%Y-%m-%d"), # Supabase pede data assim YYYY-MM-DD
+                        "valor": float(valor),
+                        "autorizacao_supervisor": "Pendente"
                     }
                     
-                    sucesso = False
                     try:
-                        requests.post(URL_API_DESPESAS, json=payload, timeout=10)
-                        sucesso = True
+                        supabase.table("despesas_comp").insert(payload).execute()
+                        st.success("✅ Despesa registrada com sucesso!")
+                        st.cache_data.clear()
+                        time.sleep(1.5)
+                        st.rerun()
                     except Exception as e:
                         st.error(f"Erro de conexão ao salvar os dados: {e}")
-                    
-                if sucesso:
-                    st.success("✅ Despesa registrada com sucesso!")
-                    st.cache_data.clear()
-                    time.sleep(1.5)
-                    st.rerun()
 
     st.markdown("<hr class='custom-hr'>", unsafe_allow_html=True)
     
@@ -475,9 +340,10 @@ if perfil == "loja":
             df_loja = df_loja.iloc[::-1].reset_index(drop=True)
             
             with col_tabela:
-                st.dataframe(df_loja, use_container_width=True, hide_index=True)
+                # Mostrar o DataFrame ocultando a coluna 'id' do Supabase
+                st.dataframe(df_loja.drop(columns=['id'], errors='ignore'), use_container_width=True, hide_index=True)
                 
-                df_loja_print = df_loja.copy()
+                df_loja_print = df_loja.drop(columns=['id'], errors='ignore').copy()
                 if 'Valor' in df_loja_print.columns:
                     df_loja_print['Valor'] = df_loja_print['Valor'].apply(formata_br)
                 
@@ -492,45 +358,35 @@ if perfil == "loja":
                     st.markdown("#### 🗑️ Cancelar Lançamento")
                     st.markdown("<span style='font-size:13px; color:#cbd5e1;'>Lançou errado? Selecione abaixo e exclua.</span>", unsafe_allow_html=True)
                     
-                    opcoes_delete = []
+                    # Usa um dicionário para linkar a Label visual com o 'id' real do banco
+                    opcoes_delete = {}
                     for idx, row in df_loja.iterrows():
                         if row.get("Autorização Supervisor") == "Pendente":
                             data_str = str(row.get("Data Trabalhada", ""))
                             nome_str = str(row.get("Nome Completo", ""))
                             valor_str = str(row.get("Valor", 0))
-                            opcoes_delete.append(f"{data_str} | {nome_str} | R$ {valor_str}")
+                            label = f"{data_str} | {nome_str} | R$ {valor_str}"
+                            opcoes_delete[label] = row['id']
                     
                     if not opcoes_delete:
                         st.info("Não há registros pendentes para exclusão.")
                     else:
-                        registro_selecionado = st.selectbox("Selecione o registro:", ["- Selecione -"] + opcoes_delete, label_visibility="collapsed")
+                        registro_selecionado = st.selectbox("Selecione o registro:", ["- Selecione -"] + list(opcoes_delete.keys()), label_visibility="collapsed")
                         
                         if st.button("Confirmar Exclusão", type="primary", use_container_width=True):
                             if registro_selecionado != "- Selecione -":
-                                partes = registro_selecionado.split(" | ")
-                                nome_del = partes[1].strip()
-                                valor_del = partes[2].replace("R$", "").strip()
+                                id_para_deletar = opcoes_delete[registro_selecionado]
                                 
                                 with st.spinner("Apagando..."):
-                                    payload_del = {
-                                        "action": "delete",
-                                        "Loja": loja_fixa,
-                                        "Nome": nome_del,
-                                        "Valor": float(valor_del)
-                                    }
-                                    
-                                    sucesso_del = False
                                     try:
-                                        requests.post(URL_API_DESPESAS, json=payload_del, timeout=10)
-                                        sucesso_del = True
+                                        # Deleta diretamente usando o ID
+                                        supabase.table("despesas_comp").delete().eq("id", id_para_deletar).execute()
+                                        st.success("Registro excluído com sucesso!")
+                                        st.cache_data.clear()
+                                        time.sleep(1)
+                                        st.rerun()
                                     except Exception as e:
                                         st.error(f"Erro de conexão ao tentar excluir: {e}")
-                                
-                                if sucesso_del:
-                                    st.success("Registro excluído com sucesso!")
-                                    st.cache_data.clear()
-                                    time.sleep(1)
-                                    st.rerun()
                             else:
                                 st.warning("Por favor, selecione um registro na lista.")
         else:
@@ -544,7 +400,7 @@ elif perfil in ["admin", "supervisor"]:
     st.success("🌐 Visão Consolidada - Painel de Aprovação")
     
     if df_base.empty:
-        st.warning("Nenhum dado encontrado ou planilha vazia.")
+        st.warning("Nenhum dado encontrado no banco de dados.")
     else:
         df_exibicao = df_base.copy()
         
@@ -610,6 +466,7 @@ elif perfil in ["admin", "supervisor"]:
                 use_container_width=True,
                 hide_index=True,
                 column_config={
+                    "id": None, # Oculta a coluna ID do banco
                     "Avaliação 📝": st.column_config.SelectboxColumn(
                         "Avaliação 📝",
                         help="Clique duas vezes para aprovar ou reprovar",
@@ -629,7 +486,7 @@ elif perfil in ["admin", "supervisor"]:
             )
             
             # --- TABELA FANTASMA PARA IMPRESSÃO (Pendentes) ---
-            df_edicao_print = df_edicao.copy()
+            df_edicao_print = df_edicao.drop(columns=['id'], errors='ignore').copy()
             if 'Valor' in df_edicao_print.columns:
                 df_edicao_print['Valor'] = df_edicao_print['Valor'].apply(formata_br)
                 
@@ -645,8 +502,8 @@ elif perfil in ["admin", "supervisor"]:
                 if mudancas.empty:
                     st.warning("⚠️ Nenhuma avaliação foi alterada. Mude o status na tabela antes de salvar.")
                 else:
-                    with st.spinner(f"⏳ Processando e salvando {len(mudancas)} avaliações de uma vez..."):
-                        lista_atualizacoes = []
+                    with st.spinner(f"⏳ Processando e salvando {len(mudancas)} avaliações..."):
+                        sucesso_geral = True
                         for idx, row in mudancas.iterrows():
                             status_selecionado = row['Avaliação 📝']
                             if "Aprovado" in status_selecionado:
@@ -656,24 +513,12 @@ elif perfil in ["admin", "supervisor"]:
                             else:
                                 status_limpo = "Pendente"
                                 
-                            lista_atualizacoes.append({
-                                "Loja": row['Loja'],
-                                "Nome": row['Nome Completo'],
-                                "Valor": float(row['Valor']),
-                                "NovoStatus": status_limpo
-                            })
-                            
-                        payload = {
-                            "action": "bulk_update",
-                            "updates": lista_atualizacoes
-                        }
-                        
-                        sucesso_geral = False
-                        try:
-                            requests.post(URL_API_DESPESAS, json=payload, timeout=20)
-                            sucesso_geral = True
-                        except Exception as e:
-                            st.error(f"Erro de conexão ao salvar: {e}")
+                            try:
+                                # Usa o ID da linha para atualizar apenas aquele registro exato
+                                supabase.table("despesas_comp").update({"autorizacao_supervisor": status_limpo}).eq("id", row['id']).execute()
+                            except Exception as e:
+                                st.error(f"Erro ao atualizar ID {row['id']}: {e}")
+                                sucesso_geral = False
                         
                         if sucesso_geral:
                             st.success("✅ Avaliações salvas com sucesso!")
@@ -698,7 +543,7 @@ elif perfil in ["admin", "supervisor"]:
             df_view = df_historico.copy()
             df_view['Valor'] = df_view['Valor'].apply(formata_br)
 
-            df_tela = df_view.copy()
+            df_tela = df_view.drop(columns=['id'], errors='ignore').copy()
             if 'Carimbo de Data/Hora' in df_tela.columns:
                 df_tela = df_tela.drop(columns=['Carimbo de Data/Hora'])
 
@@ -734,30 +579,24 @@ elif perfil in ["admin", "supervisor"]:
             st.markdown("<h4 style='text-align: center; margin-top: 0;'>🏪 Resumo de Aprovados por Loja</h4>", unsafe_allow_html=True)
             
             if not df_aprovados.empty:
-                # 1. Agrupamento do Total Geral
                 resumo_total = df_aprovados.groupby('Loja').agg(
                     Qtde_Total=('Valor', 'count'),
                     Total_RS=('Valor', 'sum')
                 ).reset_index()
 
-                # 2. Agrupamento apenas de "Despesas (Justificar)"
                 df_apenas_despesas = df_aprovados[df_aprovados['Motivo'].astype(str).str.strip() == 'Despesas (Justificar)']
                 resumo_despesas = df_apenas_despesas.groupby('Loja').agg(
                     Qtde_Desp=('Valor', 'count'),
                     Desp_RS=('Valor', 'sum')
                 ).reset_index()
 
-                # 3. Mesclar os dois agrupamentos (merge)
                 resumo_lojas = pd.merge(resumo_total, resumo_despesas, on='Loja', how='left')
 
-                # 4. Tratar valores nulos
                 resumo_lojas['Qtde_Desp'] = resumo_lojas['Qtde_Desp'].fillna(0).astype(int)
                 resumo_lojas['Desp_RS'] = resumo_lojas['Desp_RS'].fillna(0.0)
 
-                # CÁLCULO DA NOVA COLUNA (R$ Diárias = Total - Despesas)
                 resumo_lojas['Diarias_RS'] = resumo_lojas['Total_RS'] - resumo_lojas['Desp_RS']
 
-                # 5. LINHA DE TOTALIZADOR GERAL
                 total_qtde_desp = int(resumo_lojas['Qtde_Desp'].sum())
                 total_desp_rs = resumo_lojas['Desp_RS'].sum()
                 total_qtde_total = int(resumo_lojas['Qtde_Total'].sum())
@@ -775,12 +614,10 @@ elif perfil in ["admin", "supervisor"]:
 
                 resumo_lojas = pd.concat([resumo_lojas, linha_total], ignore_index=True)
 
-                # 6. Aplicar formatação de moeda
                 resumo_lojas['Desp_RS'] = resumo_lojas['Desp_RS'].apply(formata_br)
                 resumo_lojas['Diarias_RS'] = resumo_lojas['Diarias_RS'].apply(formata_br)
                 resumo_lojas['Total_RS'] = resumo_lojas['Total_RS'].apply(formata_br)
 
-                # 7. Renomear colunas conforme solicitado
                 resumo_lojas.rename(columns={
                     'Qtde_Desp': 'Qtde (Despesas)',
                     'Qtde_Total': 'Qtde (Total)',
@@ -789,10 +626,8 @@ elif perfil in ["admin", "supervisor"]:
                     'Total_RS': 'R$ Total'
                 }, inplace=True)
                 
-                # 8. Ordenar as colunas
                 resumo_lojas = resumo_lojas[['Loja', 'Qtde (Despesas)', 'Qtde (Total)', 'R$ Despesas', 'R$ Diárias', 'R$ Total']]
                 
-                # Estilizar a linha de Totalizador
                 def formata_linha_total(row):
                     if row['Loja'] == 'TOTAL':
                         return ['font-weight: bold; background-color: #334155; color: #ffffff;'] * len(row)
@@ -803,7 +638,6 @@ elif perfil in ["admin", "supervisor"]:
                 except:
                     html_resumo = resumo_lojas.style.apply(formata_linha_total, axis=1).hide_index().to_html()
                     
-                # Aplicamos a nova classe "resumo-table"
                 st.markdown(f'<div class="resumo-table">{html_resumo}</div>', unsafe_allow_html=True)
             else:
                 st.info("Nenhuma despesa aprovada até o momento.")
@@ -823,9 +657,11 @@ elif perfil in ["admin", "supervisor"]:
         # --- 1. Botão Exportar Excel ---
         with col_export:
             if 'df_view' in locals() and not df_view.empty:
+                # Remove o ID na hora de exportar para o Excel
+                df_export = df_view.drop(columns=['id'], errors='ignore').copy()
                 buffer = io.BytesIO()
                 with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-                    df_view.to_excel(writer, index=False, sheet_name='Histórico')
+                    df_export.to_excel(writer, index=False, sheet_name='Histórico')
                 
                 data_atual_br = datetime.now() - timedelta(hours=3)
                 
@@ -862,7 +698,7 @@ elif perfil in ["admin", "supervisor"]:
             @st.dialog("⚠️ Confirmar Limpeza de Registros")
             def dialog_limpar():
                 st.warning(
-                    "Esta ação irá **apagar TODOS os registros** da planilha de forma permanente, "
+                    "Esta ação irá **apagar TODOS os registros** do banco de forma permanente, "
                     "preparando o sistema para uma nova semana.\n\n"
                     "**Esta operação não pode ser desfeita.**"
                 )
@@ -871,19 +707,15 @@ elif perfil in ["admin", "supervisor"]:
                 with col_sim:
                     if st.button("✅ Sim, limpar tudo", type="primary", use_container_width=True):
                         with st.spinner("🗑️ Limpando todos os registros..."):
-                            payload_clear = {"action": "clear_all"}
-                            sucesso_clear = False
                             try:
-                                requests.post(URL_API_DESPESAS, json=payload_clear, timeout=20)
-                                sucesso_clear = True
+                                # Deleta todas as linhas onde o ID não seja zero (ou seja, todas)
+                                supabase.table("despesas_comp").delete().neq("id", 0).execute()
+                                st.success("✅ Todos os registros foram removidos!")
+                                st.cache_data.clear()
+                                time.sleep(1.5)
+                                st.rerun()
                             except Exception as e:
                                 st.error(f"Erro ao limpar: {e}")
-
-                        if sucesso_clear:
-                            st.success("✅ Todos os registros foram removidos!")
-                            st.cache_data.clear()
-                            time.sleep(1.5)
-                            st.rerun()
 
                 with col_nao:
                     if st.button("❌ Cancelar", use_container_width=True):
