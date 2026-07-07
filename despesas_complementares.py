@@ -169,10 +169,16 @@ if "logado_despesas" not in st.session_state:
 if not st.session_state["logado_despesas"]:
     st.markdown("""
         <style>
-        div.stButton > button { background-color: #2e7d32 !important; color: white !important; font-weight: bold; }
-        div.stButton > button:hover { background-color: #1b5e20 !important; }
+        div.stButton > button,
+        [data-testid="stFormSubmitButton"] button {
+            background-color: #2e7d32 !important; color: white !important; font-weight: bold;
+        }
+        div.stButton > button:hover,
+        [data-testid="stFormSubmitButton"] button:hover {
+            background-color: #1b5e20 !important;
+        }
         </style>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
     st.markdown("<br><br>", unsafe_allow_html=True)
     _, col_centro, _ = st.columns([1, 1, 1])
