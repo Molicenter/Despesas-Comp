@@ -199,7 +199,7 @@ if not st.session_state["logado_despesas"]:
             if st.button("Entrar no Sistema", use_container_width=True):
                 if user_input != "Selecione...":
                     user_clean = user_input.strip().lower()
-                    if user_clean in USUARIOS_DB and USUARIOS_DB[user_clean]["senha"] == pass_input:
+                    if user_clean in USUARIOS_DB and USUARIOS_DB[user_clean]["senha"] == pass_input.strip():
                         st.session_state["logado_despesas"] = True
                         st.session_state["usuario"] = user_clean
                         st.session_state["perfil"] = USUARIOS_DB[user_clean]["perfil"]
