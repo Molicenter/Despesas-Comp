@@ -192,11 +192,13 @@ if not st.session_state["logado_despesas"]:
             st.divider()
             
             lista_usuarios = ["Selecione..."] + list(USUARIOS_DB.keys())
-            user_input = st.selectbox("👤 Usuário de acesso:", lista_usuarios)
-            
-            pass_input = st.text_input("🔑 Senha de acesso:", type="password", placeholder="••••••••", autocomplete="off")
-            
-            if st.button("Entrar no Sistema", use_container_width=True):
+
+            with st.form("form_login", clear_on_submit=False):
+                user_input = st.selectbox("👤 Usuário de acesso:", lista_usuarios)
+                pass_input = st.text_input("🔑 Senha de acesso:", type="password", placeholder="••••••••", autocomplete="off")
+                entrar = st.form_submit_button("Entrar no Sistema", use_container_width=True)
+
+            if entrar:
                 if user_input != "Selecione...":
                     user_clean = user_input.strip().lower()
                     if user_clean in USUARIOS_DB and USUARIOS_DB[user_clean]["senha"] == pass_input.strip():
