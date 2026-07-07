@@ -37,17 +37,17 @@ st.markdown("""
     .custom-table table {
         width: 100%;
         border-collapse: collapse;
-        color: #f8fafc; 
+        color: #22303C;
         font-size: 14px;
         margin-bottom: 20px;
     }
     .custom-table th, .custom-table td {
-        border-bottom: 1px solid #334155;
+        border-bottom: 1px solid #D5E0EA;
         padding: 8px 10px;
         text-align: left;
     }
     .custom-table th {
-        color: #94a3b8;
+        color: #0B3D63;
         font-weight: 600;
     }
 
@@ -56,17 +56,17 @@ st.markdown("""
         width: 85%;
         margin: 0 auto; /* Centraliza a tabela no container */
         border-collapse: collapse;
-        color: #f8fafc;
+        color: #22303C;
         font-size: 14px;
         margin-bottom: 20px;
     }
     .resumo-table th, .resumo-table td {
-        border-bottom: 1px solid #334155;
+        border-bottom: 1px solid #D5E0EA;
         padding: 8px 10px;
         text-align: center !important; /* Centraliza os textos */
     }
     .resumo-table th {
-        color: #94a3b8;
+        color: #0B3D63;
         font-weight: 600;
     }
 
@@ -275,7 +275,7 @@ col_title, col_info, col_btn = st.columns([0.65, 0.25, 0.1])
 with col_title:
     st.markdown("<h2 style='margin:0; padding:0;'>💸 Despesas Complementares</h2>", unsafe_allow_html=True)
 with col_info:
-    st.markdown(f"<div style='text-align: right; margin-top: 5px; color: #cbd5e1; font-size: 14px;'><b>Usuário:</b> {st.session_state['usuario']}<br><b>Nível:</b> {perfil.upper()}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div style='text-align: right; margin-top: 5px; color: #22303C; font-size: 14px;'><b>Usuário:</b> {st.session_state['usuario']}<br><b>Nível:</b> {perfil.upper()}</div>", unsafe_allow_html=True)
 with col_btn:
     st.markdown("<div style='margin-top: 5px;' class='no-print'>", unsafe_allow_html=True)
     if st.button("🚪 Sair", use_container_width=True):
@@ -364,7 +364,7 @@ if perfil == "loja":
             with col_delete:
                 with st.container(border=True):
                     st.markdown("#### 🗑️ Cancelar Lançamento")
-                    st.markdown("<span style='font-size:13px; color:#cbd5e1;'>Lançou errado? Selecione abaixo e exclua.</span>", unsafe_allow_html=True)
+                    st.markdown("<span style='font-size:13px; color:#475569;'>Lançou errado? Selecione abaixo e exclua.</span>", unsafe_allow_html=True)
                     
                     # Usa um dicionário para linkar a Label visual com o 'id' real do banco
                     opcoes_delete = {}
@@ -424,7 +424,7 @@ elif perfil in ["admin", "supervisor"]:
         
         def card_metrica(coluna, titulo, qtd, valor, cor_valor):
             coluna.markdown(f"""
-            <div class='print-card' style='background-color:#1e293b; border-radius:6px; border:1px solid #334155; text-align:center;'>
+            <div class='print-card' style='background-color:#0B3D63; border-radius:6px; border:1px solid #2A6693; text-align:center;'>
                 <p style='margin:0; font-size:14px; color:#cbd5e1; line-height:1.2;'>{titulo}</p>
                 <h3 style='margin:2px 0; color:#ffffff; line-height:1.2;'>{qtd}</h3>
                 <p style='margin:0; font-size:18px; color:{cor_valor}; font-weight:bold; line-height:1.2;'>R$ {valor:,.2f}</p>
@@ -443,7 +443,7 @@ elif perfil in ["admin", "supervisor"]:
         if df_pendentes.empty:
             st.info("✨ Maravilha! Não há despesas pendentes de aprovação no momento.")
         else:
-            st.markdown("<span class='no-print' style='font-size:14px; color:#cbd5e1;'>Dê <b>dois cliques</b> na coluna <b>Avaliação 📝</b> para alterar o status. Ao finalizar, clique em salvar.</span>", unsafe_allow_html=True)
+            st.markdown("<span class='no-print' style='font-size:14px; color:#475569;'>Dê <b>dois cliques</b> na coluna <b>Avaliação 📝</b> para alterar o status. Ao finalizar, clique em salvar.</span>", unsafe_allow_html=True)
             
             if "status_lote_padrao" not in st.session_state:
                 st.session_state["status_lote_padrao"] = "🟡 Pendente"
@@ -638,7 +638,7 @@ elif perfil in ["admin", "supervisor"]:
                 
                 def formata_linha_total(row):
                     if row['Loja'] == 'TOTAL':
-                        return ['font-weight: bold; background-color: #334155; color: #ffffff;'] * len(row)
+                        return ['font-weight: bold; background-color: #0B3D63; color: #ffffff;'] * len(row)
                     return [''] * len(row)
 
                 try:
