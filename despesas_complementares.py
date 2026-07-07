@@ -304,7 +304,7 @@ if perfil == "loja":
             valor = st.number_input("Valor (R$) *", min_value=0.0, step=10.0, format="%.2f", value=None)
             obs = st.text_area("Observações", placeholder="Justificativa ou transferência...")
             
-        submit = st.form_submit_button("💾 Registrar Despesa", type="primary", use_container_width=True)
+        submit = st.form_submit_button("💾 Registrar Despesas", type="primary", use_container_width=True)
         
         if submit:
             if not nome.strip():
