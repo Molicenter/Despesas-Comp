@@ -208,12 +208,13 @@ st.markdown("""
         thead { display: table-header-group !important; }
 
         /* 8. Assinaturas: as DUAS aparecem, lado a lado */
-        /* 8a. O bloco final (assinaturas + resumo por loja) comeca SEMPRE em
-              pagina nova, para nunca cair por cima da tabela de historico. */
+        /* 8a. O bloco final (assinaturas + resumo por loja) nunca se parte no
+              meio: se couber no espaco que sobrou da tabela, imprime ali;
+              se nao couber, desce INTEIRO para a pagina seguinte. */
         [data-testid="stHorizontalBlock"]:has(.resumo-table) {
-            page-break-before: always !important;
-            break-before: page !important;
-            padding-top: 10mm !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid-page !important;
+            margin-top: 6mm !important;
             align-items: flex-start !important;
         }
         [data-testid="stHorizontalBlock"]:has(.resumo-table) [data-testid="stImage"] {
