@@ -121,7 +121,7 @@ st.markdown("""
             display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important;
             width: 100% !important; max-width: 100% !important;
             align-items: stretch !important; gap: 8px !important;
-            margin-top: 8px !important; margin-bottom: 5px !important;
+            margin-top: 8px !important; margin-bottom: 12px !important;
             page-break-inside: avoid !important;
         }
         [data-testid="column"] {
@@ -146,11 +146,11 @@ st.markdown("""
             width: 100% !important; max-width: 100% !important;
         }
 
-        /* 4. Titulos e separadores compactos */
-        h1, h2, h3, h4, h5 { color: #000000 !important; margin: 8px 0 4px 0 !important; padding: 0 !important; page-break-after: avoid !important; line-height: 1.2 !important; }
+        /* 4. Titulos e separadores: some com as linhas atravessando os titulos */
+        h1, h2, h3, h4, h5 { color: #000000 !important; margin: 14px 0 6px 0 !important; padding: 0 !important; page-break-after: avoid !important; line-height: 1.3 !important; }
         h2 { font-size: 18px !important; } h3 { font-size: 15px !important; } h4 { font-size: 13px !important; }
-        hr { margin: 6px 0 !important; border-top: 1px solid #ccc !important; }
-        [data-testid="stAlert"] { display: block !important; margin: 4px 0 6px 0 !important; padding: 5px 8px !important; min-height: 0 !important; }
+        hr { display: none !important; }
+        [data-testid="stAlert"] { display: block !important; margin: 4px 0 10px 0 !important; padding: 5px 8px !important; min-height: 0 !important; }
         [data-testid="stAlert"] * { font-size: 11px !important; margin: 0 !important; }
 
         /* 5. Cards de metrica (os 4 agora cabem na largura) */
