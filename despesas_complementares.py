@@ -208,6 +208,19 @@ st.markdown("""
         thead { display: table-header-group !important; }
 
         /* 8. Assinaturas: as DUAS aparecem, lado a lado */
+        /* 8a. O bloco final (assinaturas + resumo por loja) comeca SEMPRE em
+              pagina nova, para nunca cair por cima da tabela de historico. */
+        [data-testid="stHorizontalBlock"]:has(.resumo-table) {
+            page-break-before: always !important;
+            break-before: page !important;
+            padding-top: 10mm !important;
+            align-items: flex-start !important;
+        }
+        [data-testid="stHorizontalBlock"]:has(.resumo-table) [data-testid="stImage"] {
+            margin-top: 18mm !important;   /* desce as assinaturas para a altura da tabela */
+        }
+        .resumo-table { margin-top: 4mm !important; }
+
         [data-testid="stImage"] { display: block !important; height: auto !important; margin: 0 !important; padding: 0 !important; }
         [data-testid="stImage"] img { max-height: 70px !important; max-width: 100% !important; width: auto !important; margin: 0 auto !important; display: block !important; position: relative !important; }
 
