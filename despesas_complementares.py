@@ -710,7 +710,7 @@ elif perfil in ["admin", "supervisor"]:
         # TABELA CONSOLIDADA E HISTÓRICO - INJEÇÃO HTML DIRETA
         # =========================================================
         st.markdown("<hr class='custom-hr'>", unsafe_allow_html=True)
-        st.markdown("<h3>📚 Despesas Complementares dessa semana</h3>",
+        st.markdown("<h3 class='no-print'>📚 Despesas Complementares dessa semana</h3>",
                     unsafe_allow_html=True)
 
         if df_historico.empty:
