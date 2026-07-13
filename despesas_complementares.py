@@ -150,8 +150,11 @@ st.markdown("""
         h1, h2, h3, h4, h5 { color: #000000 !important; margin: 14px 0 6px 0 !important; padding: 0 !important; page-break-after: avoid !important; line-height: 1.3 !important; }
         h2 { font-size: 18px !important; } h3 { font-size: 15px !important; } h4 { font-size: 13px !important; }
         hr { display: none !important; }
-        [data-testid="stAlert"] { display: block !important; margin: 4px 0 10px 0 !important; padding: 5px 8px !important; min-height: 0 !important; }
-        [data-testid="stAlert"] * { font-size: 11px !important; margin: 0 !important; }
+        /* Avisos de tela (st.info / st.success) nao saem no papel */
+        [data-testid="stAlert"],
+        .element-container:has([data-testid="stAlert"]) {
+            display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; position: absolute !important;
+        }
 
         /* 5. Cards de metrica (os 4 agora cabem na largura) */
         .print-card {
@@ -598,7 +601,7 @@ elif perfil in ["admin", "supervisor"]:
         # --- AVALIAÇÃO EM LOTE ---
         st.markdown("<hr class='custom-hr'>", unsafe_allow_html=True)
         st.markdown(
-            "<h3>⏳ Avaliação em Lote (Lançamentos Pendentes)</h3>", unsafe_allow_html=True)
+            "<h3 class='no-print'>⏳ Avaliação em Lote (Lançamentos Pendentes)</h3>", unsafe_allow_html=True)
 
         if df_pendentes.empty:
             st.info("✨ Maravilha! Não há despesas pendentes de aprovação no momento.")
