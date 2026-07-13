@@ -125,8 +125,11 @@ st.markdown("""
             page-break-inside: avoid !important;
         }
         [data-testid="column"] {
-            display: block !important; flex: 1 1 0% !important;
-            min-width: 0 !important; overflow: visible !important; padding: 0 !important;
+            display: block !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            overflow: hidden !important;
+            padding: 0 !important;
         }
 
         /* 4. Titulos e separadores compactos */
@@ -150,7 +153,7 @@ st.markdown("""
         .print-only-table { display: block !important; margin-bottom: 8px !important; }
         .custom-table, .resumo-table { width: 100% !important; max-width: 100% !important; overflow: visible !important; }
         .custom-table table {
-            table-layout: auto !important;
+            table-layout: fixed !important;   /* trava a tabela na largura da folha */
             width: 100% !important; max-width: 100% !important;
             border-collapse: collapse !important; margin-bottom: 5px !important;
         }
@@ -158,10 +161,21 @@ st.markdown("""
             color: #000000 !important; background-color: #FFFFFF !important;
             border-bottom: 1px solid #999999 !important;
             font-size: 9.5px !important; padding: 3px 4px !important; line-height: 1.25 !important;
-            white-space: normal !important; word-break: break-word !important; overflow-wrap: break-word !important;
+            white-space: normal !important; word-break: break-word !important; overflow-wrap: anywhere !important;
             vertical-align: top !important;
         }
         .custom-table th { font-weight: bold !important; border-bottom: 1.5px solid #000000 !important; }
+
+        /* Larguras por coluna da tabela de historico:
+           Loja | Nome | Motivo | Observacoes | Departamento | Data | Valor | Status */
+        .hist-table table th:nth-child(1), .hist-table table td:nth-child(1) { width:  4% !important; }
+        .hist-table table th:nth-child(2), .hist-table table td:nth-child(2) { width: 14% !important; }
+        .hist-table table th:nth-child(3), .hist-table table td:nth-child(3) { width: 11% !important; }
+        .hist-table table th:nth-child(4), .hist-table table td:nth-child(4) { width: 33% !important; }
+        .hist-table table th:nth-child(5), .hist-table table td:nth-child(5) { width: 11% !important; }
+        .hist-table table th:nth-child(6), .hist-table table td:nth-child(6) { width:  9% !important; text-align: center !important; }
+        .hist-table table th:nth-child(7), .hist-table table td:nth-child(7) { width:  8% !important; text-align: right !important; }
+        .hist-table table th:nth-child(8), .hist-table table td:nth-child(8) { width: 10% !important; text-align: center !important; }
         .resumo-table table {
             table-layout: fixed !important;
             width: 100% !important; max-width: 100% !important;
@@ -701,7 +715,7 @@ elif perfil in ["admin", "supervisor"]:
                                                 'Status']).hide_index().to_html()
 
             st.markdown(
-                f'<div class="custom-table">{html_tabela}</div>', unsafe_allow_html=True)
+                f'<div class="custom-table hist-table">{html_tabela}</div>', unsafe_allow_html=True)
 
         # =========================================================
         # BLOCO DE ASSINATURAS NO RODAPÉ E RESUMO POR LOJA
