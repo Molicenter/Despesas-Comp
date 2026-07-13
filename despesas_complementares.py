@@ -146,8 +146,9 @@ st.markdown("""
             width: 100% !important; max-width: 100% !important;
         }
 
-        /* 4. Titulos e separadores: some com as linhas atravessando os titulos */
-        h1, h2, h3, h4, h5 { color: #000000 !important; margin: 14px 0 6px 0 !important; padding: 0 !important; page-break-after: avoid !important; line-height: 1.3 !important; }
+        /* 4. Titulos: sem 'page-break-after: avoid' (bug do Chrome que faz os
+              blocos se sobreporem na impressao); espaco garantido via padding */
+        h1, h2, h3, h4, h5 { color: #000000 !important; margin: 6px 0 2px 0 !important; padding: 10px 0 4px 0 !important; line-height: 1.3 !important; }
         h2 { font-size: 18px !important; } h3 { font-size: 15px !important; } h4 { font-size: 13px !important; }
         hr { display: none !important; }
         /* Avisos de tela (st.info / st.success) nao saem no papel */
@@ -156,19 +157,17 @@ st.markdown("""
             display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; position: absolute !important;
         }
 
-        /* 5. Cards de metrica (os 4 agora cabem na largura) */
-        .print-card {
-            background: #FFFFFF !important; border: 1px solid #000000 !important; box-shadow: none !important;
-            margin: 0 !important; padding: 5px !important;
-            box-sizing: border-box !important; width: 100% !important;
+        /* 5. Cards de metrica (Pendentes/Aprovados/Reprovados/Total) NAO saem
+              no papel — os totais ja aparecem no resumo por loja */
+        [data-testid="stHorizontalBlock"]:has(.print-card) {
+            display: none !important; height: 0 !important; margin: 0 !important; padding: 0 !important; position: absolute !important;
         }
-        .print-card * { color: #000000 !important; margin: 0 !important; line-height: 1.2 !important; }
-        .print-card h3 { font-size: 16px !important; margin: 3px 0 !important; }
-        .print-card p { font-size: 11px !important; font-weight: bold; }
+        .print-card { display: none !important; }
 
         /* 6. TABELAS: largura travada em 100% e quebra de linha nas observacoes */
         .print-only-table { display: block !important; margin-bottom: 8px !important; }
         .custom-table, .resumo-table { width: 100% !important; max-width: 100% !important; overflow: visible !important; }
+        .custom-table { margin-top: 6px !important; }
         .custom-table table {
             table-layout: fixed !important;   /* trava a tabela na largura da folha */
             width: 100% !important; max-width: 100% !important;
