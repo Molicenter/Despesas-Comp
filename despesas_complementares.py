@@ -132,6 +132,20 @@ st.markdown("""
             padding: 0 !important;
         }
 
+        /* 3b. CINTO DE SEGURANCA: o Streamlit grava larguras em PIXELS inline
+              nos elementos (ex.: style="width: 1583px", medido no monitor).
+              Estilo inline vence a folha de estilo, entao capamos TUDO com
+              max-width para nada passar da largura da folha. */
+        [data-testid="stAppViewContainer"] div,
+        [data-testid="stAppViewContainer"] table {
+            max-width: 100% !important;
+            min-width: 0 !important;
+        }
+        [data-testid="stMarkdown"], [data-testid="stMarkdownContainer"],
+        .stMarkdown, .stMarkdownContainer, .stElementContainer {
+            width: 100% !important; max-width: 100% !important;
+        }
+
         /* 4. Titulos e separadores compactos */
         h1, h2, h3, h4, h5 { color: #000000 !important; margin: 8px 0 4px 0 !important; padding: 0 !important; page-break-after: avoid !important; line-height: 1.2 !important; }
         h2 { font-size: 18px !important; } h3 { font-size: 15px !important; } h4 { font-size: 13px !important; }
