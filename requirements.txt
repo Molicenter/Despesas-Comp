@@ -1,4 +1,7 @@
-streamlit
-pandas
-supabase
-openpyxl
+streamlit==1.42.0
+pandas==2.2.3
+numpy==1.26.4
+pyarrow==17.0.0
+supabase==2.13.0
+openpyxl==3.1.5
+jinja2==3.1.5
