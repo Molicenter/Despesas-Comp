@@ -357,7 +357,7 @@ def formata_br(valor):
 @st.cache_data(ttl=5)
 def carregar_dados():
     try:
-        response = supabase.table("despesas_comp").select("*").execute()
+        response = supabase.table("desp_comp").select("*").execute()
         df = pd.DataFrame(response.data)
 
         if not df.empty:
@@ -466,7 +466,7 @@ if perfil == "loja":
                     }
 
                     try:
-                        supabase.table("despesas_comp").insert(
+                        supabase.table("desp_comp").insert(
                             payload).execute()
                         st.success("✅ Despesa registrada com sucesso!")
                         st.cache_data.clear()
@@ -536,7 +536,7 @@ if perfil == "loja":
                                 with st.spinner("Apagando..."):
                                     try:
                                         # Deleta diretamente usando o ID
-                                        supabase.table("despesas_comp").delete().eq(
+                                        supabase.table("desp_comp").delete().eq(
                                             "id", id_para_deletar).execute()
                                         st.success(
                                             "Registro excluído com sucesso!")
@@ -692,7 +692,7 @@ elif perfil in ["admin", "supervisor"]:
 
                             try:
                                 # Usa o ID da linha para atualizar apenas aquele registro exato
-                                supabase.table("despesas_comp").update(
+                                supabase.table("desp_comp").update(
                                     {"autorizacao_supervisor": status_limpo}).eq("id", row['id']).execute()
                             except Exception as e:
                                 st.error(
@@ -908,7 +908,7 @@ elif perfil in ["admin", "supervisor"]:
                         with st.spinner("🗑️ Limpando todos os registros..."):
                             try:
                                 # Deleta todas as linhas onde o ID não seja zero (ou seja, todas)
-                                supabase.table("despesas_comp").delete().neq(
+                                supabase.table("desp_comp").delete().neq(
                                     "id", 0).execute()
                                 st.success(
                                     "✅ Todos os registros foram removidos!")
