@@ -894,24 +894,34 @@ elif perfil in ["admin", "supervisor"]:
 
         # --- 3. Botão Limpar Registros (somente admin) ---
         if perfil == "admin":
+            # ⚠️ Só entram na limpeza os lançamentos JÁ AVALIADOS.
+            # Os "Pendente" permanecem no banco para avaliação posterior.
+            STATUS_LIMPAVEIS = ["Aprovado", "Reprovado"]
+            qtd_limpaveis = len(df_aprovados) + len(df_reprovados)
+            qtd_pendentes = len(df_pendentes)
+
             @st.dialog("⚠️ Confirmar Limpeza de Registros")
             def dialog_limpar():
                 st.warning(
-                    "Esta ação irá **apagar TODOS os registros** do banco de forma permanente, "
-                    "preparando o sistema para uma nova semana.\n\n"
+                    f"Serão apagados **{qtd_limpaveis} lançamento(s) já avaliados** "
+                    f"(Aprovados e Reprovados), de forma permanente.\n\n"
+                    f"Os **{qtd_pendentes} lançamento(s) Pendentes** serão **mantidos** "
+                    f"no sistema para avaliação.\n\n"
                     "**Esta operação não pode ser desfeita.**"
                 )
                 col_sim, col_nao = st.columns(2)
 
                 with col_sim:
-                    if st.button("✅ Sim, limpar tudo", type="primary", use_container_width=True):
-                        with st.spinner("🗑️ Limpando todos os registros..."):
+                    if st.button("✅ Sim, limpar avaliados", type="primary", use_container_width=True):
+                        with st.spinner("🗑️ Limpando os registros já avaliados..."):
                             try:
-                                # Deleta todas as linhas onde o ID não seja zero (ou seja, todas)
-                                supabase.table("desp_comp").delete().neq(
-                                    "id", 0).execute()
+                                # Apaga somente Aprovados e Reprovados; Pendentes ficam intactos
+                                resposta = supabase.table("desp_comp").delete().in_(
+                                    "autorizacao_supervisor", STATUS_LIMPAVEIS).execute()
+                                removidos = len(resposta.data or [])
                                 st.success(
-                                    "✅ Todos os registros foram removidos!")
+                                    f"✅ {removidos} registro(s) avaliado(s) removido(s)! "
+                                    f"Os pendentes continuam no sistema.")
                                 st.cache_data.clear()
                                 time.sleep(1.5)
                                 st.rerun()
@@ -923,5 +933,11 @@ elif perfil in ["admin", "supervisor"]:
                         st.rerun()
 
             with col_clear:
-                if st.button("🗑️ Limpar Nova Semana", use_container_width=True):
+                if st.button(
+                    f"🗑️ Limpar Avaliados ({qtd_limpaveis})",
+                    use_container_width=True,
+                    disabled=(qtd_limpaveis == 0),
+                    help="Apaga apenas Aprovados e Reprovados. Pendentes são preservados."
+                         if qtd_limpaveis else "Não há lançamentos avaliados para limpar.",
+                ):
                     dialog_limpar()
