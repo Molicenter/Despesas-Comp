@@ -6,6 +6,11 @@ import io
 import os
 import streamlit.components.v1 as components
 from supabase import create_client, Client
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from reportlab.lib.units import mm
 
 # =========================================================
 # 1. CONFIGURAÇÕES INICIAIS E CSS
@@ -354,6 +359,73 @@ def formata_br(valor):
         return valor
 
 
+def gerar_pdf_registros(df, titulo, usuario):
+    """Gera um PDF (A4 paisagem) com os registros informados e devolve os bytes."""
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=landscape(A4),
+        leftMargin=20, rightMargin=20, topMargin=20, bottomMargin=20
+    )
+
+    styles = getSampleStyleSheet()
+    estilo_celula = ParagraphStyle(
+        "celula", parent=styles["Normal"], fontSize=7.5, leading=9)
+    estilo_header = ParagraphStyle(
+        "header_cel", parent=styles["Normal"], fontSize=8, leading=9,
+        textColor=colors.white, fontName="Helvetica-Bold")
+
+    data_geracao = (datetime.now() - timedelta(hours=3)
+                    ).strftime("%d/%m/%Y %H:%M")
+
+    elementos = [
+        Paragraph(titulo, styles["Title"]),
+        Paragraph(
+            f"Gerado em {data_geracao} por <b>{usuario}</b>", styles["Normal"]),
+        Spacer(1, 10),
+    ]
+
+    colunas = ["Carimbo de Data/Hora", "Nome Completo", "Motivo", "Observações",
+               "Departamento", "Data Trabalhada", "Valor", "Autorização Supervisor"]
+    colunas_presentes = [c for c in colunas if c in df.columns]
+    larguras_pct = {
+        "Carimbo de Data/Hora": 0.10, "Nome Completo": 0.14, "Motivo": 0.11,
+        "Observações": 0.30, "Departamento": 0.11, "Data Trabalhada": 0.09,
+        "Valor": 0.08, "Autorização Supervisor": 0.07
+    }
+    largura_util = landscape(A4)[0] - 40
+    col_widths = [largura_util * larguras_pct[c] for c in colunas_presentes]
+
+    cabecalho = [Paragraph(c, estilo_header) for c in colunas_presentes]
+    linhas = [cabecalho]
+    for _, row in df.iterrows():
+        linha = []
+        for c in colunas_presentes:
+            valor = row.get(c, "")
+            if c == "Valor":
+                valor = formata_br(valor)
+            linha.append(Paragraph(str(valor), estilo_celula))
+        linhas.append(linha)
+
+    tabela = Table(linhas, colWidths=col_widths, repeatRows=1)
+    tabela.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0B3D63")),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#999999")),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1),
+         [colors.white, colors.HexColor("#F1F5F9")]),
+        ("TOPPADDING", (0, 0), (-1, -1), 4),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+        ("LEFTPADDING", (0, 0), (-1, -1), 4),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+    ]))
+    elementos.append(tabela)
+
+    doc.build(elementos)
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
 @st.cache_data(ttl=5)
 def carregar_dados():
     try:
@@ -477,24 +549,67 @@ if perfil == "loja":
 
     st.markdown("<hr class='custom-hr'>", unsafe_allow_html=True)
 
-    col_tabela, col_delete = st.columns([0.7, 0.3])
+    col_tabela, col_export = st.columns([0.7, 0.3])
 
     with col_tabela:
         st.markdown("### 📋 Seus Registros Recentes")
+        st.markdown(
+            "<span style='font-size:13px; color:#475569;'>Marque a 🗑️ de um lançamento <b>Pendente</b> para cancelá-lo.</span>", unsafe_allow_html=True)
 
     if not df_base.empty and 'Loja' in df_base.columns:
         df_loja = df_base[df_base['Loja'].astype(str) == str(loja_fixa)].copy()
 
         if not df_loja.empty:
             df_loja = df_loja.iloc[::-1].reset_index(drop=True)
+            df_loja_sem_id = df_loja.drop(columns=['id'], errors='ignore')
 
             with col_tabela:
-                # Mostrar o DataFrame ocultando a coluna 'id' do Supabase
-                st.dataframe(df_loja.drop(
-                    columns=['id'], errors='ignore'), use_container_width=True, hide_index=True)
+                # Coluna de checkbox "lixeira" embutida na própria linha do lançamento
+                df_editor = df_loja_sem_id.copy()
+                df_editor.insert(0, '🗑️', False)
 
-                df_loja_print = df_loja.drop(
-                    columns=['id'], errors='ignore').copy()
+                colunas_bloqueadas = [
+                    c for c in df_editor.columns if c != '🗑️']
+
+                edited_loja = st.data_editor(
+                    df_editor,
+                    key="editor_cancelar_loja",
+                    use_container_width=True,
+                    hide_index=True,
+                    disabled=colunas_bloqueadas,
+                    column_config={
+                        '🗑️': st.column_config.CheckboxColumn(
+                            '🗑️', help="Marque para cancelar este lançamento (somente status Pendente)", width="small"),
+                        'Valor': st.column_config.NumberColumn(format="R$ %.2f"),
+                    }
+                )
+
+                marcados = edited_loja[edited_loja['🗑️']]
+                marcados_pendentes = marcados[marcados['Autorização Supervisor'] == 'Pendente']
+                marcados_bloqueados = marcados[marcados['Autorização Supervisor'] != 'Pendente']
+
+                if not marcados_bloqueados.empty:
+                    st.warning(
+                        "⚠️ Só é possível cancelar lançamentos com status **Pendente**. Desmarque os demais.")
+
+                if not marcados_pendentes.empty:
+                    ids_para_excluir = df_loja.loc[marcados_pendentes.index, 'id'].tolist(
+                    )
+                    if st.button(f"🗑️ Cancelar {len(ids_para_excluir)} lançamento(s) marcado(s)", type="primary"):
+                        with st.spinner("Apagando..."):
+                            try:
+                                supabase.table("desp_comp").delete().in_(
+                                    "id", ids_para_excluir).execute()
+                                st.success(
+                                    "Registro(s) cancelado(s) com sucesso!")
+                                st.cache_data.clear()
+                                time.sleep(1)
+                                st.rerun()
+                            except Exception as e:
+                                st.error(
+                                    f"Erro de conexão ao tentar excluir: {e}")
+
+                df_loja_print = df_loja_sem_id.copy()
                 if 'Valor' in df_loja_print.columns:
                     df_loja_print['Valor'] = df_loja_print['Valor'].apply(
                         formata_br)
@@ -507,51 +622,33 @@ if perfil == "loja":
                 st.markdown(
                     f'<div class="print-only-table custom-table">{html_loja}</div>', unsafe_allow_html=True)
 
-            with col_delete:
+            with col_export:
                 with st.container(border=True):
-                    st.markdown("#### 🗑️ Cancelar Lançamento")
+                    st.markdown("#### 📄 Exportar Registros")
                     st.markdown(
-                        "<span style='font-size:13px; color:#475569;'>Lançou errado? Selecione abaixo e exclua.</span>", unsafe_allow_html=True)
+                        "<span style='font-size:13px; color:#475569;'>Baixe seus registros recentes em PDF.</span>", unsafe_allow_html=True)
 
-                    # Usa um dicionário para linkar a Label visual com o 'id' real do banco
-                    opcoes_delete = {}
-                    for idx, row in df_loja.iterrows():
-                        if row.get("Autorização Supervisor") == "Pendente":
-                            data_str = str(row.get("Data Trabalhada", ""))
-                            nome_str = str(row.get("Nome Completo", ""))
-                            valor_str = str(row.get("Valor", 0))
-                            label = f"{data_str} | {nome_str} | R$ {valor_str}"
-                            opcoes_delete[label] = row['id']
+                    pdf_bytes = gerar_pdf_registros(
+                        df_loja_sem_id,
+                        f"Despesas Complementares - Loja {loja_fixa:02d}",
+                        st.session_state["usuario"]
+                    )
+                    data_atual_br = datetime.now() - timedelta(hours=3)
 
-                    if not opcoes_delete:
-                        st.info("Não há registros pendentes para exclusão.")
-                    else:
-                        registro_selecionado = st.selectbox("Selecione o registro:", [
-                                                            "- Selecione -"] + list(opcoes_delete.keys()), label_visibility="collapsed")
-
-                        if st.button("Confirmar Exclusão", type="primary", use_container_width=True):
-                            if registro_selecionado != "- Selecione -":
-                                id_para_deletar = opcoes_delete[registro_selecionado]
-
-                                with st.spinner("Apagando..."):
-                                    try:
-                                        # Deleta diretamente usando o ID
-                                        supabase.table("desp_comp").delete().eq(
-                                            "id", id_para_deletar).execute()
-                                        st.success(
-                                            "Registro excluído com sucesso!")
-                                        st.cache_data.clear()
-                                        time.sleep(1)
-                                        st.rerun()
-                                    except Exception as e:
-                                        st.error(
-                                            f"Erro de conexão ao tentar excluir: {e}")
-                            else:
-                                st.warning(
-                                    "Por favor, selecione um registro na lista.")
+                    st.download_button(
+                        label="📄 Exportar PDF",
+                        data=pdf_bytes,
+                        file_name=f"despesas_loja{loja_fixa:02d}_{data_atual_br.strftime('%d%m%Y')}.pdf",
+                        mime="application/pdf",
+                        use_container_width=True,
+                        type="primary"
+                    )
         else:
             with col_tabela:
                 st.info("Nenhum registro encontrado para a sua loja até o momento.")
+            with col_export:
+                st.button("📄 Exportar PDF", disabled=True, use_container_width=True,
+                          help="Não há registros para exportar.")
     else:
         st.info("O banco de dados ainda está vazio.")
 
